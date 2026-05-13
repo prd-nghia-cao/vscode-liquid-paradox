@@ -1,0 +1,41 @@
+{
+  "name": "vscode-liquid-paradox",
+  "private": true,
+  "displayName": "Liquid Paradox",
+  "description": "IntelliSense for LiquidJS templates in Paradox by Workday projects.",
+  "version": "0.0.1",
+  "publisher": "local-dev",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Programming Languages"],
+  "activationEvents": ["onLanguage:liquid"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "liquid",
+      "aliases": ["Liquid", "liquid"],
+      "extensions": [".liquid"]
+    }],
+    "grammars": [{
+      "scopeName": "paradox.injection",
+      "path": "./syntaxes/paradox-injection.tmLanguage.json",
+      "injectTo": ["text.html.liquid"]
+    }],
+    "extensionDependencies": ["sissel.shopify-liquid"]
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"client has no unit tests\" && exit 0",
+    "lint": "tsc --noEmit",
+    "package": "vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^2.32.0",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.5.0"
+  }
+}

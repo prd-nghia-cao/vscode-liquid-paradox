@@ -1,0 +1,5 @@
+{
+  "scopeName": "paradox.injection",
+  "injectionSelector": "L:text.html.liquid",
+  "patterns": []
+}
