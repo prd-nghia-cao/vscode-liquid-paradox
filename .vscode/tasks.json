@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build:all",
+      "type": "shell",
+      "command": "pnpm -r build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "watch:server",
+      "type": "shell",
+      "command": "pnpm --filter @vscode-liquid-paradox/server build -- --watch",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
