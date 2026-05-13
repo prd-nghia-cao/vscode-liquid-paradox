@@ -13,13 +13,14 @@
   },
   "dependencies": {
     "liquidjs": "^10.16.0",
+    "typescript": "^5.5.0",
     "vscode-languageserver": "^9.0.1",
-    "vscode-languageserver-textdocument": "^1.0.12",
-    "typescript": "^5.5.0"
+    "vscode-languageserver-textdocument": "^1.0.12"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "esbuild": "^0.21.0",
+    "memfs": "^4.57.2",
     "vitest": "^2.0.0"
   }
 }
