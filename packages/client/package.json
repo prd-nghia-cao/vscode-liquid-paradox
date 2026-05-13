@@ -2,8 +2,8 @@
   "name": "vscode-liquid-paradox",
   "private": true,
   "displayName": "Liquid Paradox",
-  "description": "IntelliSense for LiquidJS templates in Paradox by Workday projects.",
-  "version": "0.0.1",
+  "description": "IntelliSense and syntax highlighting for LiquidJS templates in Paradox by Workday projects.",
+  "version": "0.0.2",
   "publisher": "local-dev",
   "engines": {
     "vscode": "^1.90.0"
@@ -25,10 +25,19 @@
         ],
         "extensions": [
           ".liquid"
-        ]
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
+      {
+        "language": "liquid",
+        "scopeName": "text.html.liquid",
+        "path": "./syntaxes/liquid.tmLanguage.json",
+        "embeddedLanguages": {
+          "text.html.basic": "html"
+        }
+      },
       {
         "scopeName": "paradox.injection",
         "path": "./syntaxes/paradox-injection.tmLanguage.json",
@@ -36,9 +45,6 @@
           "text.html.liquid"
         ]
       }
-    ],
-    "extensionDependencies": [
-      "sissel.shopify-liquid"
     ]
   },
   "scripts": {

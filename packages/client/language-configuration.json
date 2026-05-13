@@ -1,0 +1,57 @@
+{
+  "comments": {
+    "blockComment": ["{%- comment -%}", "{%- endcomment -%}"]
+  },
+  "brackets": [
+    ["{%", "%}"],
+    ["{{", "}}"],
+    ["{#", "#}"],
+    ["<", ">"],
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  "autoClosingPairs": [
+    { "open": "{%", "close": "%}" },
+    { "open": "{{", "close": "}}" },
+    { "open": "{#", "close": "#}" },
+    { "open": "<!--", "close": "-->" },
+    { "open": "[", "close": "]" },
+    { "open": "(", "close": ")" },
+    { "open": "\"", "close": "\"", "notIn": ["string"] },
+    { "open": "'", "close": "'", "notIn": ["string", "comment"] }
+  ],
+  "surroundingPairs": [
+    ["{%", "%}"],
+    ["{{", "}}"],
+    ["{#", "#}"],
+    ["<", ">"],
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+    ["\"", "\""],
+    ["'", "'"]
+  ],
+  "wordPattern": "(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\/\\?\\s]+)",
+  "indentationRules": {
+    "increaseIndentPattern": "<(?!\\?|(?:area|base|br|col|frame|hr|html|img|input|link|meta|param)\\b|[^>]*\\/>)([-_\\.A-Za-z0-9]+)(?=\\s|>)\\b[^>]*>(?!.*<\\/\\1>)|<!--(?!.*-->)|\\{\\{[#!\\^@\\*\\$<>]|\\{%-?\\s*(if|unless|for|case|capture|tablerow|raw|comment|block|liquid)\\b",
+    "decreaseIndentPattern": "^\\s*(<\\/[-_\\.A-Za-z0-9]+\\b[^>]*>|-->|\\}\\}|\\{%-?\\s*end(if|unless|for|case|capture|tablerow|raw|comment|block|liquid)\\b)"
+  },
+  "onEnterRules": [
+    {
+      "beforeText": "\\{%-?\\s*(if|unless|for|case|capture|tablerow|raw|block)\\b[^%]*-?%\\}\\s*$",
+      "afterText": "^\\s*\\{%-?\\s*end(if|unless|for|case|capture|tablerow|raw|block)\\b",
+      "action": { "indent": "indentOutdent" }
+    },
+    {
+      "beforeText": "\\{%-?\\s*(if|unless|for|case|capture|tablerow|raw|block)\\b[^%]*-?%\\}\\s*$",
+      "action": { "indent": "indent" }
+    }
+  ],
+  "folding": {
+    "markers": {
+      "start": "^\\s*<!--\\s*#region\\b|\\{%-?\\s*(if|unless|for|case|capture|tablerow|raw|block|comment)\\b",
+      "end": "^\\s*<!--\\s*#endregion\\b|\\{%-?\\s*end(if|unless|for|case|capture|tablerow|raw|block|comment)\\b"
+    }
+  }
+}

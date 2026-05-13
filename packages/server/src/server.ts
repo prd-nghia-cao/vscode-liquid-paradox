@@ -5,6 +5,7 @@ import {
   TextDocumentSyncKind,
   DiagnosticSeverity,
   DidChangeWatchedFilesNotification,
+  CompletionTriggerKind,
   type InitializeResult,
   type CompletionItem as LspCompletionItem,
   CompletionItemKind,
@@ -17,7 +18,8 @@ import * as path from 'node:path';
 import { createServerState } from './serverState.js';
 import { buildFileIndex } from './workspace/fileIndex.js';
 import { buildWatcherRegistrations } from './workspace/watchers.js';
-import { provideCompletions } from './providers/completion.js';
+import { provideCompletions, type CompletionTriggerKind as InternalTriggerKind } from './providers/completion.js';
+import { COMPLETION_TRIGGER_CHARACTERS } from './serverCapabilities.js';
 import { provideHover } from './providers/hover.js';
 import { provideDefinition } from './providers/definition.js';
 import { provideDiagnostics, type Severity } from './providers/diagnostics.js';
@@ -57,7 +59,9 @@ export function createServer(): void {
     return {
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
-        completionProvider: { triggerCharacters: ['{', '%', '|', '"', "'", '.', ','] },
+        completionProvider: {
+          triggerCharacters: [...COMPLETION_TRIGGER_CHARACTERS],
+        },
         hoverProvider: true,
         definitionProvider: true,
       },
@@ -87,13 +91,27 @@ export function createServer(): void {
 
   connection.onCompletion((params) => {
     const doc = documents.get(params.textDocument.uri);
-    if (!doc) return [];
-    const model =
-      state.documentStore.get(params.textDocument.uri) ?? state.documentStore.update(doc.uri, doc.getText());
-    const items = provideCompletions(model, params.position, {
-      fileIndex: state.fileIndex,
-      lookupComponentProps: (k) => state.lookupComponentProps(k),
-    });
+    if (!doc) {
+      connection.console.log(`[completion] no document for ${params.textDocument.uri}`);
+      return [];
+    }
+    const model = state.documentStore.update(doc.uri, doc.getText());
+    const triggerKind = toInternalTriggerKind(params.context?.triggerKind);
+    const items = provideCompletions(
+      model,
+      params.position,
+      {
+        fileIndex: state.fileIndex,
+        lookupComponentProps: (k) => state.lookupComponentProps(k),
+      },
+      triggerKind,
+    );
+    const around = describeCursor(doc.getText(), params.position);
+    connection.console.log(
+      `[completion] pos=L${params.position.line}:C${params.position.character} ` +
+        `trigger=${triggerKind} char=${JSON.stringify(params.context?.triggerCharacter ?? null)} ` +
+        `around=${JSON.stringify(around)} items=${items.length}`,
+    );
     return items.map(
       (i) =>
         ({
@@ -101,15 +119,24 @@ export function createServer(): void {
           kind: lspCompletionKind(i.kind),
           detail: i.detail,
           documentation: i.documentation,
+          insertText: i.insertText,
+          sortText: i.sortText,
         }) satisfies LspCompletionItem,
     );
   });
 
+  function describeCursor(text: string, pos: { line: number; character: number }): string {
+    const lines = text.split('\n');
+    const line = lines[pos.line] ?? '';
+    const before = line.slice(Math.max(0, pos.character - 6), pos.character);
+    const after = line.slice(pos.character, Math.min(line.length, pos.character + 6));
+    return `${before}|${after}`;
+  }
+
   connection.onHover((params) => {
     const doc = documents.get(params.textDocument.uri);
     if (!doc) return null;
-    const model =
-      state.documentStore.get(params.textDocument.uri) ?? state.documentStore.update(doc.uri, doc.getText());
+    const model = state.documentStore.update(doc.uri, doc.getText());
     const h = provideHover(model, params.position, { fileIndex: state.fileIndex });
     if (!h) return null;
     return { contents: { kind: 'markdown', value: h.markdown }, range: h.range };
@@ -118,8 +145,7 @@ export function createServer(): void {
   connection.onDefinition((params): Definition | null => {
     const doc = documents.get(params.textDocument.uri);
     if (!doc) return null;
-    const model =
-      state.documentStore.get(params.textDocument.uri) ?? state.documentStore.update(doc.uri, doc.getText());
+    const model = state.documentStore.update(doc.uri, doc.getText());
     const d = provideDefinition(model, params.position, { fileIndex: state.fileIndex });
     return d ? { uri: d.uri, range: d.range } : null;
   });
@@ -217,8 +243,21 @@ function lspCompletionKind(k: string): CompletionItemKind | undefined {
       Module: CompletionItemKind.Module,
       File: CompletionItemKind.File,
       Property: CompletionItemKind.Property,
+      Value: CompletionItemKind.Value,
     } as Record<string, CompletionItemKind>
   )[k];
+}
+
+function toInternalTriggerKind(k: CompletionTriggerKind | undefined): InternalTriggerKind {
+  switch (k) {
+    case CompletionTriggerKind.TriggerCharacter:
+      return 'triggerCharacter';
+    case CompletionTriggerKind.TriggerForIncompleteCompletions:
+      return 'forIncomplete';
+    case CompletionTriggerKind.Invoked:
+    default:
+      return 'invoked';
+  }
 }
 
 createServer();

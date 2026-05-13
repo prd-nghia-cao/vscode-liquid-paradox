@@ -1,0 +1,246 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Liquid",
+  "scopeName": "text.html.liquid",
+  "fileTypes": ["liquid"],
+  "comment": "Original work, MIT-licensed. Self-contained Liquid grammar that delegates HTML to `text.html.basic` shipped with VS Code core. See openspec/changes/fix-syntax-highlighting/design.md for rationale.",
+  "patterns": [
+    { "include": "#liquid-comment-block" },
+    { "include": "#liquid-comment-line" },
+    { "include": "#liquid-raw-block" },
+    { "include": "#liquid-path-tag" },
+    { "include": "#liquid-tag" },
+    { "include": "#liquid-output" },
+    { "include": "text.html.basic" }
+  ],
+  "repository": {
+    "liquid-comment-block": {
+      "name": "comment.block.liquid",
+      "begin": "\\{%-?\\s*comment\\s*-?%\\}",
+      "end": "\\{%-?\\s*endcomment\\s*-?%\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.begin.liquid" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.end.liquid" }
+      }
+    },
+    "liquid-comment-line": {
+      "name": "comment.block.curly-hash.liquid",
+      "begin": "\\{#",
+      "end": "#\\}",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.comment.begin.liquid" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.comment.end.liquid" }
+      }
+    },
+    "liquid-raw-block": {
+      "name": "meta.raw.liquid",
+      "begin": "(\\{%-?)\\s*(raw)\\s*(-?%\\})",
+      "end": "(\\{%-?)\\s*(endraw)\\s*(-?%\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.liquid" },
+        "2": { "name": "keyword.control.liquid" },
+        "3": { "name": "punctuation.section.embedded.end.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.liquid" },
+        "2": { "name": "keyword.control.liquid" },
+        "3": { "name": "punctuation.section.embedded.end.liquid" }
+      },
+      "contentName": "string.unquoted.raw.liquid"
+    },
+    "liquid-tag": {
+      "name": "meta.tag.liquid",
+      "begin": "(\\{%-?)",
+      "end": "(-?%\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.liquid" }
+      },
+      "patterns": [
+        { "include": "#tag-name" },
+        { "include": "#liquid-expression" }
+      ]
+    },
+    "liquid-path-tag": {
+      "name": "meta.tag.path.liquid",
+      "begin": "(\\{%-?)\\s*(render|include|layout)\\b",
+      "end": "(-?%\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.liquid" },
+        "2": { "name": "keyword.control.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.liquid" }
+      },
+      "patterns": [
+        {
+          "comment": "First string literal after render/include/layout is the template path. \\G + first-pattern semantics make this match only once per tag so subsequent argument strings keep their normal scopes.",
+          "begin": "\\G\\s*(?=[\"'])",
+          "end": "(?<=[\"'])",
+          "patterns": [
+            {
+              "name": "markup.underline.link.path.liquid string.quoted.double.liquid",
+              "begin": "\"",
+              "end": "\"",
+              "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin.liquid" }
+              },
+              "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end.liquid" }
+              },
+              "patterns": [
+                { "name": "constant.character.escape.liquid", "match": "\\\\." }
+              ]
+            },
+            {
+              "name": "markup.underline.link.path.liquid string.quoted.single.liquid",
+              "begin": "'",
+              "end": "'",
+              "beginCaptures": {
+                "0": { "name": "punctuation.definition.string.begin.liquid" }
+              },
+              "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end.liquid" }
+              },
+              "patterns": [
+                { "name": "constant.character.escape.liquid", "match": "\\\\." }
+              ]
+            }
+          ]
+        },
+        { "include": "#liquid-expression" }
+      ]
+    },
+    "liquid-output": {
+      "name": "meta.embedded.output.liquid",
+      "begin": "(\\{\\{-?)",
+      "end": "(-?\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.liquid" }
+      },
+      "patterns": [
+        { "include": "#liquid-expression" }
+      ]
+    },
+    "tag-name": {
+      "match": "(?<=\\{%-?\\s*)(if|elsif|else|endif|unless|endunless|case|when|endcase|for|endfor|tablerow|endtablerow|break|continue|cycle|assign|capture|endcapture|increment|decrement|include|render|layout|section|block|endblock|liquid|echo|raw|endraw|comment|endcomment)\\b",
+      "name": "keyword.control.liquid"
+    },
+    "liquid-expression": {
+      "patterns": [
+        { "include": "#liquid-string" },
+        { "include": "#liquid-number" },
+        { "include": "#liquid-constant" },
+        { "include": "#liquid-operator" },
+        { "include": "#liquid-filter" },
+        { "include": "#liquid-property" },
+        { "include": "#liquid-identifier" },
+        { "include": "#liquid-punctuation" }
+      ]
+    },
+    "liquid-string": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.liquid",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.liquid", "match": "\\\\." }
+          ]
+        },
+        {
+          "name": "string.quoted.single.liquid",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "name": "constant.character.escape.liquid", "match": "\\\\." }
+          ]
+        }
+      ]
+    },
+    "liquid-number": {
+      "match": "\\b-?\\d+(\\.\\d+)?\\b",
+      "name": "constant.numeric.liquid"
+    },
+    "liquid-constant": {
+      "match": "\\b(true|false|nil|null|empty|blank)\\b",
+      "name": "constant.language.liquid"
+    },
+    "liquid-operator": {
+      "patterns": [
+        {
+          "match": "\\b(and|or|not|contains|in)\\b",
+          "name": "keyword.operator.word.liquid"
+        },
+        {
+          "match": "==|!=|<>|<=|>=|<|>|=",
+          "name": "keyword.operator.comparison.liquid"
+        },
+        {
+          "match": "\\.\\.",
+          "name": "keyword.operator.range.liquid"
+        }
+      ]
+    },
+    "liquid-filter": {
+      "begin": "(\\|)\\s*([a-zA-Z_][\\w-]*)",
+      "end": "(?=\\||-?%\\}|-?\\}\\}|,|\\))",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.filter.liquid" },
+        "2": { "name": "support.function.filter.liquid" }
+      },
+      "patterns": [
+        {
+          "match": "(:)",
+          "name": "punctuation.separator.key-value.liquid"
+        },
+        { "include": "#liquid-string" },
+        { "include": "#liquid-number" },
+        { "include": "#liquid-constant" },
+        { "include": "#liquid-property" },
+        {
+          "match": "([a-zA-Z_][\\w-]*)\\s*(:)",
+          "captures": {
+            "1": { "name": "variable.parameter.liquid" },
+            "2": { "name": "punctuation.separator.key-value.liquid" }
+          }
+        },
+        { "include": "#liquid-identifier" },
+        {
+          "match": ",",
+          "name": "punctuation.separator.comma.liquid"
+        }
+      ]
+    },
+    "liquid-property": {
+      "match": "(\\.)([a-zA-Z_][\\w-]*)",
+      "captures": {
+        "1": { "name": "punctuation.accessor.liquid" },
+        "2": { "name": "variable.other.property.liquid" }
+      }
+    },
+    "liquid-identifier": {
+      "match": "\\b[a-zA-Z_][\\w-]*\\b",
+      "name": "variable.other.liquid"
+    },
+    "liquid-punctuation": {
+      "patterns": [
+        { "match": "\\(", "name": "punctuation.section.parens.begin.liquid" },
+        { "match": "\\)", "name": "punctuation.section.parens.end.liquid" },
+        { "match": "\\[", "name": "punctuation.section.brackets.begin.liquid" },
+        { "match": "\\]", "name": "punctuation.section.brackets.end.liquid" },
+        { "match": ",", "name": "punctuation.separator.comma.liquid" },
+        { "match": ":", "name": "punctuation.separator.key-value.liquid" }
+      ]
+    }
+  }
+}

@@ -20,6 +20,8 @@ export function createDocumentStore(deps: DocumentStoreDeps): DocumentStore {
 
   return {
     update(uri, text) {
+      const cached = cache.get(uri);
+      if (cached && cached.text === text) return cached;
       const absPath = deps.uriToPath(uri);
       const jsonPath = absPath + '.json';
       const jsonText = deps.readJsonCompanion(jsonPath);

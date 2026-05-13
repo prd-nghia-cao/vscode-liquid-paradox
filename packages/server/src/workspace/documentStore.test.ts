@@ -58,4 +58,30 @@ describe('DocumentStore', () => {
     store.remove('file:///a.liquid');
     expect(store.get('file:///a.liquid')).toBeUndefined();
   });
+
+  it('update returns a fresh model when the text changes between calls', () => {
+    const store = createDocumentStore({
+      isComponentUri: () => false,
+      readJsonCompanion: () => undefined,
+      lookupComponent: () => undefined,
+      uriToPath: (u) => u.replace('file://', ''),
+    });
+    const first = store.update('file:///a.liquid', '');
+    const second = store.update('file:///a.liquid', '{%');
+    expect(first.text).toBe('');
+    expect(second.text).toBe('{%');
+    expect(second).not.toBe(first);
+  });
+
+  it('update is idempotent when text is unchanged (reuses the cached model)', () => {
+    const store = createDocumentStore({
+      isComponentUri: () => false,
+      readJsonCompanion: () => undefined,
+      lookupComponent: () => undefined,
+      uriToPath: (u) => u.replace('file://', ''),
+    });
+    const first = store.update('file:///a.liquid', '<h1>hi</h1>');
+    const second = store.update('file:///a.liquid', '<h1>hi</h1>');
+    expect(second).toBe(first);
+  });
 });

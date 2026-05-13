@@ -6,7 +6,7 @@ await build({
   platform: 'node',
   target: 'node20',
   format: 'cjs',
-  outfile: 'dist/server.js',
+  outfile: 'dist/server.cjs',
   external: [],
   sourcemap: true,
   logLevel: 'info',

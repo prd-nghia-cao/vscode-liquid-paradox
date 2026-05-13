@@ -12,6 +12,17 @@ export const PARADOX_TAGS: Readonly<Record<ParadoxTag['kind'], ParadoxKindInfo>>
   attribute: { kind: 'attribute', hover: 'Render the data for Site Studio' },
 });
 
+export const PARADOX_KINDS: readonly ParadoxTag['kind'][] = Object.freeze([
+  'component',
+  'snippet',
+  'data',
+  'attribute',
+]);
+
+export function isParadoxKind(value: string): value is ParadoxTag['kind'] {
+  return value === 'component' || value === 'snippet' || value === 'data' || value === 'attribute';
+}
+
 export function getParadoxHover(kind: string): string | undefined {
   if (kind === 'component' || kind === 'snippet' || kind === 'data' || kind === 'attribute') {
     return PARADOX_TAGS[kind].hover;

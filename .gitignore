@@ -5,3 +5,6 @@ out/
 *.vsix
 .DS_Store
 *.log
+.claude/
+.cursor/
+.github/

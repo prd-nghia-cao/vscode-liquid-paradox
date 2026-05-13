@@ -1,5 +1,105 @@
 {
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "scopeName": "paradox.injection",
   "injectionSelector": "L:text.html.liquid",
-  "patterns": []
+  "comment": "Layers Paradox backend tag highlighting on top of any text.html.liquid grammar. Only matches `{{kind:value ...}}` forms where kind ∈ {component, snippet, data, attribute}; standard Liquid `{{ expr }}` output is left untouched.",
+  "patterns": [
+    { "include": "#paradox-component" },
+    { "include": "#paradox-snippet" },
+    { "include": "#paradox-data" },
+    { "include": "#paradox-attribute" }
+  ],
+  "repository": {
+    "paradox-component": {
+      "name": "meta.tag.paradox.component.liquid",
+      "begin": "(\\{\\{)\\s*(component)(:)",
+      "end": "(\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.paradox.liquid" },
+        "2": { "name": "entity.name.tag.paradox.liquid" },
+        "3": { "name": "punctuation.separator.key-value.paradox.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.paradox.liquid" }
+      },
+      "patterns": [{ "include": "#paradox-body" }]
+    },
+    "paradox-snippet": {
+      "name": "meta.tag.paradox.snippet.liquid",
+      "begin": "(\\{\\{)\\s*(snippet)(:)",
+      "end": "(\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.paradox.liquid" },
+        "2": { "name": "entity.name.tag.paradox.liquid" },
+        "3": { "name": "punctuation.separator.key-value.paradox.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.paradox.liquid" }
+      },
+      "patterns": [{ "include": "#paradox-body" }]
+    },
+    "paradox-data": {
+      "name": "meta.tag.paradox.data.liquid",
+      "begin": "(\\{\\{)\\s*(data)(:)",
+      "end": "(\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.paradox.liquid" },
+        "2": { "name": "entity.name.tag.paradox.liquid" },
+        "3": { "name": "punctuation.separator.key-value.paradox.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.paradox.liquid" }
+      },
+      "patterns": [{ "include": "#paradox-body" }]
+    },
+    "paradox-attribute": {
+      "name": "meta.tag.paradox.attribute.liquid",
+      "begin": "(\\{\\{)\\s*(attribute)(:)",
+      "end": "(\\}\\})",
+      "beginCaptures": {
+        "1": { "name": "punctuation.section.embedded.begin.paradox.liquid" },
+        "2": { "name": "entity.name.tag.paradox.liquid" },
+        "3": { "name": "punctuation.separator.key-value.paradox.liquid" }
+      },
+      "endCaptures": {
+        "1": { "name": "punctuation.section.embedded.end.paradox.liquid" }
+      },
+      "patterns": [{ "include": "#paradox-body" }]
+    },
+    "paradox-body": {
+      "patterns": [
+        {
+          "match": "([a-zA-Z_][\\w-]*)(:)",
+          "captures": {
+            "1": { "name": "variable.parameter.paradox.liquid" },
+            "2": { "name": "punctuation.separator.key-value.paradox.liquid" }
+          }
+        },
+        {
+          "name": "string.quoted.double.paradox.liquid",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "name": "constant.character.escape.paradox.liquid", "match": "\\\\." }
+          ]
+        },
+        {
+          "name": "string.quoted.single.paradox.liquid",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            { "name": "constant.character.escape.paradox.liquid", "match": "\\\\." }
+          ]
+        },
+        {
+          "match": "\\b-?\\d+(\\.\\d+)?\\b",
+          "name": "constant.numeric.paradox.liquid"
+        },
+        {
+          "match": "[a-zA-Z_][\\w./-]*",
+          "name": "variable.other.paradox.liquid"
+        }
+      ]
+    }
+  }
 }

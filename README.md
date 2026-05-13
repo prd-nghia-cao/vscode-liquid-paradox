@@ -4,17 +4,24 @@ VS Code IntelliSense for LiquidJS templates in Paradox by Workday static-site pr
 
 ## Features
 
-- Tag, filter, and variable completions
+- Tag-name completions inside `{% … %}` (immediately after typing `{%`, `{%-`, or any partial tag name)
+- Variable, built-in literal, and pipe-sentinel completions inside `{{ … }}`
+- Filter completions after `|` (with or without surrounding whitespace)
+- Per-tag continuation keywords (`{% for x in `, `{% render … with `, `{% if x ` + operators, …)
+- Paradox-kind completions inside `{{component:…}}`, `{{snippet:…}}`, `{{data:…}}`, `{{attribute:…}}` — type `{{co` to see the four kinds
+- Component / partial / layout path completions inside `{% render "" %}`, `{% include "" %}`, `{% layout "" %}`
+- Component prop completions after `{% render "name", `
 - Hover documentation linking to https://liquidjs.com
 - Go-to-definition for variables, `{% render %}`, and `{% layout %}`
 - Diagnostics for unknown tags/filters, unresolved paths, unbalanced blocks, and unknown component props
 - Sibling `.liquid.json` data files surfaced as typed variables
-- Component prop hints parsed from leading `{% assign x = x | default: ... %}` blocks
 - Paradox backend tags (`{{component:...}}`, `{{snippet:...}}`, `{{data:...}}`, `{{attribute:...}}`) with hover-only docs
+
+See `docs/completion-surfaces.md` for the full matrix of completion regions and what each one offers.
 
 ## Installation
 
-This extension depends on [`sissel.shopify-liquid`](https://marketplace.visualstudio.com/items?itemName=sissel.shopify-liquid) for syntax highlighting. It is installed automatically via `extensionDependencies`.
+Syntax highlighting works out of the box — the extension ships its own HTML + Liquid TextMate grammar and language configuration, so no companion extension is required. [`sissel.shopify-liquid`](https://marketplace.visualstudio.com/items?itemName=sissel.shopify-liquid) is optional and remains compatible if you already have it installed; the Paradox-tag injection grammar layers cleanly on top of either base grammar.
 
 ## Requirements
 
