@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @vscode-liquid-paradox/server build
+      - run: pnpm --filter @vscode-liquid-paradox/server test
+      - run: pnpm --filter vscode-liquid-paradox build
+      - run: pnpm --filter vscode-liquid-paradox package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: packages/client/*.vsix
