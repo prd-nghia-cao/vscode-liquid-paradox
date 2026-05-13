@@ -12,7 +12,7 @@ describe('types module', () => {
     const b: Binding = {
       name: 'forloop',
       type: { kind: 'object', properties: {} },
-      origin
+      origin,
     };
     expect(b.name).toBe('forloop');
   });
@@ -31,7 +31,7 @@ describe('types module', () => {
     const p: ParadoxTag = {
       kind: 'component',
       value: 'Hero',
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } }
+      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
     };
     expect(p.kind).toBe('component');
   });

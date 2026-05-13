@@ -26,53 +26,53 @@ The following are explicitly out of scope for v1 and must not be added without a
 
 ### 3.1 Completions
 
-| Trigger context | Suggestions | VS Code icon / detail |
-|---|---|---|
-| After `{%` or `{%-` | All LiquidJS tags including closing forms (`if`, `endif`, `for`, `endfor`, `assign`, `capture`, `endcapture`, `render`, `layout`, `include`, `case`, `when`, `endcase`, `unless`, `endunless`, `tablerow`, `endtablerow`, `cycle`, `increment`, `decrement`, `raw`, `endraw`, `comment`, `endcomment`, `liquid`, `echo`) | `Keyword`; detail = "tag" |
-| After `{{` or inside `{% echo `, `{% assign x = `, etc. | Variables in scope (see §4) | `Variable`; detail = origin (`.liquid.json` key / loop var / assign / capture / prop / built-in) |
-| After `\|` inside any expression | All 40+ LiquidJS filters (math, string, html/uri, array, date, misc, base64, crypto categories) | `Function`; detail = signature like `date(format)` |
-| Inside `{% render "..." %}` path string | `.liquid` files under `componentsDir` and `partialsDir` (recursive) | `Symbol.Module` for components, `Symbol.File` for partials; label = path relative to root dir, no `.liquid` extension |
-| Inside `{% layout "..." %}` path string | `.liquid` files under `layoutsDir` (recursive) | `Symbol.File`; label = path relative to layouts dir, no `.liquid` extension |
-| After `{% render "components/X", ` (and after each `,` in the arg list) | Props parsed from `X.liquid`'s leading assign-default block | `Property`; detail = inferred type + default value |
-| After `{% render "partials/X", ` | **No prop completion** — partials have no declared prop interface; the caller may pass any kwargs | (no suggestions) |
+| Trigger context                                                         | Suggestions                                                                                                                                                                                                                                                                                                              | VS Code icon / detail                                                                                                 |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| After `{%` or `{%-`                                                     | All LiquidJS tags including closing forms (`if`, `endif`, `for`, `endfor`, `assign`, `capture`, `endcapture`, `render`, `layout`, `include`, `case`, `when`, `endcase`, `unless`, `endunless`, `tablerow`, `endtablerow`, `cycle`, `increment`, `decrement`, `raw`, `endraw`, `comment`, `endcomment`, `liquid`, `echo`) | `Keyword`; detail = "tag"                                                                                             |
+| After `{{` or inside `{% echo `, `{% assign x = `, etc.                 | Variables in scope (see §4)                                                                                                                                                                                                                                                                                              | `Variable`; detail = origin (`.liquid.json` key / loop var / assign / capture / prop / built-in)                      |
+| After `\|` inside any expression                                        | All 40+ LiquidJS filters (math, string, html/uri, array, date, misc, base64, crypto categories)                                                                                                                                                                                                                          | `Function`; detail = signature like `date(format)`                                                                    |
+| Inside `{% render "..." %}` path string                                 | `.liquid` files under `componentsDir` and `partialsDir` (recursive)                                                                                                                                                                                                                                                      | `Symbol.Module` for components, `Symbol.File` for partials; label = path relative to root dir, no `.liquid` extension |
+| Inside `{% layout "..." %}` path string                                 | `.liquid` files under `layoutsDir` (recursive)                                                                                                                                                                                                                                                                           | `Symbol.File`; label = path relative to layouts dir, no `.liquid` extension                                           |
+| After `{% render "components/X", ` (and after each `,` in the arg list) | Props parsed from `X.liquid`'s leading assign-default block                                                                                                                                                                                                                                                              | `Property`; detail = inferred type + default value                                                                    |
+| After `{% render "partials/X", `                                        | **No prop completion** — partials have no declared prop interface; the caller may pass any kwargs                                                                                                                                                                                                                        | (no suggestions)                                                                                                      |
 
 ### 3.2 Hover
 
-| Cursor over | Tooltip content |
-|---|---|
-| A tag name | Description + syntax example + link to https://liquidjs.com/tags/{name}.html |
-| A filter name | Description + signature + example + link to https://liquidjs.com/filters/{name}.html |
-| A variable identifier | Origin + inferred type. Example: ``` `testimonials` — array, from `testimonials.liquid.json` ``` |
-| `{{component:...}}` | "Render the component on Site Studio" |
-| `{{snippet:...}}` | "Render the snippet on Site Studio" |
-| `{{data:...}}` | "Render the data for Site Studio" |
-| `{{attribute:...}}` | "Render the data for Site Studio" |
-| `{% render "X" %}` path string | Resolved absolute path; markdown link to open |
-| `{% layout "X" %}` path string | Resolved absolute path; markdown link to open |
+| Cursor over                    | Tooltip content                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| A tag name                     | Description + syntax example + link to https://liquidjs.com/tags/{name}.html                   |
+| A filter name                  | Description + signature + example + link to https://liquidjs.com/filters/{name}.html           |
+| A variable identifier          | Origin + inferred type. Example: `` `testimonials` — array, from `testimonials.liquid.json` `` |
+| `{{component:...}}`            | "Render the component on Site Studio"                                                          |
+| `{{snippet:...}}`              | "Render the snippet on Site Studio"                                                            |
+| `{{data:...}}`                 | "Render the data for Site Studio"                                                              |
+| `{{attribute:...}}`            | "Render the data for Site Studio"                                                              |
+| `{% render "X" %}` path string | Resolved absolute path; markdown link to open                                                  |
+| `{% layout "X" %}` path string | Resolved absolute path; markdown link to open                                                  |
 
 ### 3.3 Go-to-definition
 
-| On | Jumps to |
-|---|---|
-| Variable identifier (JSON origin) | Exact line/column of the key in the paired `.liquid.json` |
-| Variable identifier (local origin) | The `{% assign %}` / `{% capture %}` / `{% for %}` line that introduced it |
+| On                                          | Jumps to                                                                                                           |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Variable identifier (JSON origin)           | Exact line/column of the key in the paired `.liquid.json`                                                          |
+| Variable identifier (local origin)          | The `{% assign %}` / `{% capture %}` / `{% for %}` line that introduced it                                         |
 | Variable identifier (component prop origin) | The `{% assign %}` line in the component file that declares the prop (when called from within a component context) |
-| `{% render "X" %}` path | Target `.liquid` file (cursor at line 1) |
-| `{% layout "X" %}` path | Target layout `.liquid` file |
-| Component prop name inside render args | The `{% assign %}` line in the component file that declares it |
+| `{% render "X" %}` path                     | Target `.liquid` file (cursor at line 1)                                                                           |
+| `{% layout "X" %}` path                     | Target layout `.liquid` file                                                                                       |
+| Component prop name inside render args      | The `{% assign %}` line in the component file that declares it                                                     |
 
 ### 3.4 Diagnostics
 
-| Rule | Severity | Source of truth |
-|---|---|---|
-| Unknown tag | Error | Built-in tag table |
-| Unknown filter | Error | Built-in filter table |
-| Unresolved `render` path | Error | File index (components + partials) |
-| Unresolved `layout` path | Error | File index (layouts) |
-| Unbalanced tag (missing `endif`, `endfor`, `endcase`, `endcapture`, `endunless`, `endraw`, `endcomment`, `endtablerow`) | Error | AST walk |
-| Mismatched delimiters (e.g. unclosed `{{` or `{%`) | Error | Tokenizer error |
-| Variable not in scope (not in any of the four origins) | Warning | Scope analyzer (§4) |
-| Unknown prop in `{% render "components/X", foo: ... %}` | Warning | Component prop block (§4.3) |
+| Rule                                                                                                                    | Severity | Source of truth                    |
+| ----------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------- |
+| Unknown tag                                                                                                             | Error    | Built-in tag table                 |
+| Unknown filter                                                                                                          | Error    | Built-in filter table              |
+| Unresolved `render` path                                                                                                | Error    | File index (components + partials) |
+| Unresolved `layout` path                                                                                                | Error    | File index (layouts)               |
+| Unbalanced tag (missing `endif`, `endfor`, `endcase`, `endcapture`, `endunless`, `endraw`, `endcomment`, `endtablerow`) | Error    | AST walk                           |
+| Mismatched delimiters (e.g. unclosed `{{` or `{%`)                                                                      | Error    | Tokenizer error                    |
+| Variable not in scope (not in any of the four origins)                                                                  | Warning  | Scope analyzer (§4)                |
+| Unknown prop in `{% render "components/X", foo: ... %}`                                                                 | Warning  | Component prop block (§4.3)        |
 
 ## 4. Variable scope model
 
@@ -84,7 +84,7 @@ For `path/to/X.liquid`, the analyzer reads `path/to/X.liquid.json` if it exists.
 
 ```jsonc
 // testimonials.liquid.json
-{ "testimonials": [ { "type": "quote", "quote": "...", "name": "..." } ] }
+{ "testimonials": [{ "type": "quote", "quote": "...", "name": "..." }] }
 ```
 
 The scope contains `testimonials: Array<{ type: string, quote: string, name: string }>`. This drives:
@@ -106,17 +106,17 @@ Components and layouts have no `.liquid.json` companion — this origin is empty
 
 The AST walker pushes new bindings onto the current scope when it encounters:
 
-| Construct | Binding | Type |
-|---|---|---|
-| `{% assign name = expr %}` | `name` | Inferred from RHS expression |
-| `{% capture name %}...{% endcapture %}` | `name` | `string` |
-| `{% for x in collection %}...{% endfor %}` | `x` and `forloop` | `x` = element type of `collection`; `forloop` = `{ index, index0, first, last, length, ... }` |
-| `{% tablerow x in collection %}` | `x` and `tablerowloop` | Same shape as `for` + `tablerowloop` |
-| `{% increment x %}` / `{% decrement x %}` | `x` | `number` |
+| Construct                                  | Binding                | Type                                                                                          |
+| ------------------------------------------ | ---------------------- | --------------------------------------------------------------------------------------------- |
+| `{% assign name = expr %}`                 | `name`                 | Inferred from RHS expression                                                                  |
+| `{% capture name %}...{% endcapture %}`    | `name`                 | `string`                                                                                      |
+| `{% for x in collection %}...{% endfor %}` | `x` and `forloop`      | `x` = element type of `collection`; `forloop` = `{ index, index0, first, last, length, ... }` |
+| `{% tablerow x in collection %}`           | `x` and `tablerowloop` | Same shape as `for` + `tablerowloop`                                                          |
+| `{% increment x %}` / `{% decrement x %}`  | `x`                    | `number`                                                                                      |
 
 Closing tags pop the scope. Inner declarations shadow outer ones for the duration of their block. RHS expression typing traces filter outputs via a small return-type table (e.g. `upcase` → `string`, `size` → `number`); unknown filter chains yield `unknown` (no diagnostic fires — only the "unknown variable" rule does).
 
-### 4.3 Origin 3 — Component props (components/*.liquid only)
+### 4.3 Origin 3 — Component props (components/\*.liquid only)
 
 For files under `componentsDir`, the analyzer extracts props from the leading `{% assign %}` block by walking top-level AST nodes until it hits a non-`assign` node. Each `{% assign LHS = RHS | default: DEFAULT %}` where **RHS is a bare identifier** is a prop:
 
@@ -149,7 +149,7 @@ pageDiscoveryPlugin({
   partialsDir: 'src/partials',
   componentsDir: 'src/components',
   // ...
-})
+});
 ```
 
 Paths are resolved relative to the workspace root.
@@ -171,9 +171,9 @@ Three in-memory maps, populated by recursive directory scans on startup:
 
 ```ts
 type FileIndex = {
-  components: Map<string, ComponentEntry>;  // key: "button" or "forms/input"
-  partials:   Map<string, PartialEntry>;    // key: "layout/header"
-  layouts:    Map<string, LayoutEntry>;     // key: "layout" or "job-details-layout"
+  components: Map<string, ComponentEntry>; // key: "button" or "forms/input"
+  partials: Map<string, PartialEntry>; // key: "layout/header"
+  layouts: Map<string, LayoutEntry>; // key: "layout" or "job-details-layout"
 };
 ```
 
@@ -214,12 +214,12 @@ A match flags the node as a Paradox tag with `{ kind, value, range }`. Standard 
 
 Static lookup, exact wording per spec:
 
-| Kind | Hover content |
-|---|---|
+| Kind        | Hover content                         |
+| ----------- | ------------------------------------- |
 | `component` | "Render the component on Site Studio" |
-| `snippet`   | "Render the snippet on Site Studio" |
-| `data`      | "Render the data for Site Studio" |
-| `attribute` | "Render the data for Site Studio" |
+| `snippet`   | "Render the snippet on Site Studio"   |
+| `data`      | "Render the data for Site Studio"     |
+| `attribute` | "Render the data for Site Studio"     |
 
 Rendered as a single-line markdown block.
 
@@ -251,22 +251,22 @@ v1 ships the file empty (no scopes added). v2+ can fill it in to recolor Paradox
 
 ### 8.1 Document lifecycle
 
-| LSP event | Action |
-|---|---|
-| `textDocument/didOpen` | Parse, build semantic model, push diagnostics. Cache by URI. |
+| LSP event                | Action                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `textDocument/didOpen`   | Parse, build semantic model, push diagnostics. Cache by URI.                                 |
 | `textDocument/didChange` | Re-parse the changed buffer; re-emit diagnostics through a **150 ms debounce** keyed by URI. |
-| `textDocument/didSave` | If the file is under `componentsDir`, refresh prop cache and re-diagnose dependents. |
-| `textDocument/didClose` | Drop the cached document model; file-index entry remains. |
+| `textDocument/didSave`   | If the file is under `componentsDir`, refresh prop cache and re-diagnose dependents.         |
+| `textDocument/didClose`  | Drop the cached document model; file-index entry remains.                                    |
 
 ### 8.2 Caches
 
-| Cache | Key | Value | Invalidated by |
-|---|---|---|---|
-| Document model | URI | `{ ast, scopes, paradoxTags, diagnostics, deps }` | `didChange` for that URI |
-| JSON schema | absolute `.liquid.json` path + mtime | type tree | `.liquid.json` file change on disk |
-| Component prop block | absolute component path + mtime | `Prop[]` | Component file change on disk |
-| File index | (global singleton) | three maps from §5.2 | File create/rename/delete in indexed dirs; `vite.config.ts` change |
-| Vite config | (global singleton) | four resolved paths | `vite.config.ts` change |
+| Cache                | Key                                  | Value                                             | Invalidated by                                                     |
+| -------------------- | ------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------ |
+| Document model       | URI                                  | `{ ast, scopes, paradoxTags, diagnostics, deps }` | `didChange` for that URI                                           |
+| JSON schema          | absolute `.liquid.json` path + mtime | type tree                                         | `.liquid.json` file change on disk                                 |
+| Component prop block | absolute component path + mtime      | `Prop[]`                                          | Component file change on disk                                      |
+| File index           | (global singleton)                   | three maps from §5.2                              | File create/rename/delete in indexed dirs; `vite.config.ts` change |
+| Vite config          | (global singleton)                   | four resolved paths                               | `vite.config.ts` change                                            |
 
 All caches use mtime-keyed entries so stale hits are impossible.
 
@@ -275,8 +275,8 @@ All caches use mtime-keyed entries so stale hits are impossible.
 Three watchers registered through LSP `client/registerCapability`:
 
 1. **`vite.config.ts`** — re-extract config; if any path changed, rebuild the file index.
-2. **`**/*.liquid`** scoped to the three indexed dirs — update the corresponding file-index map. If a component changes, invalidate its prop cache and re-diagnose every open document that calls `{% render "components/X" %}`.
-3. **`**/*.liquid.json`** scoped to `pagesDir` and `partialsDir` — invalidate the JSON schema cache for that path. If the paired `.liquid` is open, re-diagnose it.
+2. **`**/\*.liquid`** scoped to the three indexed dirs — update the corresponding file-index map. If a component changes, invalidate its prop cache and re-diagnose every open document that calls `{% render "components/X" %}`.
+3. **`**/\*.liquid.json`** scoped to `pagesDir`and`partialsDir`— invalidate the JSON schema cache for that path. If the paired`.liquid` is open, re-diagnose it.
 
 ### 8.4 Cross-file invalidation
 
@@ -284,9 +284,9 @@ Each parsed document records its dependency set:
 
 ```ts
 type Dependencies = {
-  jsonCompanion?: string;        // sibling .liquid.json
-  renderedFiles: string[];       // every {% render "..." %} target
-  layoutFile?: string;           // {% layout "..." %} target
+  jsonCompanion?: string; // sibling .liquid.json
+  renderedFiles: string[]; // every {% render "..." %} target
+  layoutFile?: string; // {% layout "..." %} target
 };
 ```
 
@@ -359,15 +359,15 @@ vscode-liquid-paradox/
 
 Pure-functional analyzer pieces in isolation with `memfs` for filesystem. Modules and representative tests:
 
-| Module | Test cases |
-|---|---|
-| `analyzer/tokenize.ts` | Standard tags, Paradox tags, nested expressions, malformed input |
-| `analyzer/scope.ts` | `assign`/`capture`/`for` push/pop, shadowing, `forloop` exposure |
-| `analyzer/jsonSchema.ts` | Primitives, nested objects, uniform vs mixed arrays, null leaves |
-| `analyzer/propBlock.ts` | LHS=RHS pattern, LHS≠RHS alias, non-prop assigns skipped |
-| `workspace/viteConfig.ts` | Happy path, missing file, malformed TS, missing plugin call |
-| `providers/completion.ts` | Each trigger context returns expected items |
-| `providers/diagnostics.ts` | Each rule fires (and only fires) on its specific input |
+| Module                     | Test cases                                                       |
+| -------------------------- | ---------------------------------------------------------------- |
+| `analyzer/tokenize.ts`     | Standard tags, Paradox tags, nested expressions, malformed input |
+| `analyzer/scope.ts`        | `assign`/`capture`/`for` push/pop, shadowing, `forloop` exposure |
+| `analyzer/jsonSchema.ts`   | Primitives, nested objects, uniform vs mixed arrays, null leaves |
+| `analyzer/propBlock.ts`    | LHS=RHS pattern, LHS≠RHS alias, non-prop assigns skipped         |
+| `workspace/viteConfig.ts`  | Happy path, missing file, malformed TS, missing plugin call      |
+| `providers/completion.ts`  | Each trigger context returns expected items                      |
+| `providers/diagnostics.ts` | Each rule fires (and only fires) on its specific input           |
 
 Coverage target: 90% line coverage on `analyzer/` and `providers/`.
 

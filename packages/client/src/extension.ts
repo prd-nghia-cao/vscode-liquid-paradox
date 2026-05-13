@@ -8,8 +8,12 @@ export function activate(context: ExtensionContext): void {
   const serverModule = context.asAbsolutePath(path.join('..', 'server', 'dist', 'server.js'));
 
   const serverOptions: ServerOptions = {
-    run:   { module: serverModule, transport: TransportKind.ipc },
-    debug: { module: serverModule, transport: TransportKind.ipc, options: { execArgv: ['--nolazy', '--inspect=6009'] } }
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: { execArgv: ['--nolazy', '--inspect=6009'] },
+    },
   };
 
   const clientOptions: LanguageClientOptions = {
@@ -18,9 +22,9 @@ export function activate(context: ExtensionContext): void {
       fileEvents: [
         workspace.createFileSystemWatcher('**/vite.config.ts'),
         workspace.createFileSystemWatcher('**/*.liquid'),
-        workspace.createFileSystemWatcher('**/*.liquid.json')
-      ]
-    }
+        workspace.createFileSystemWatcher('**/*.liquid.json'),
+      ],
+    },
   };
 
   client = new LanguageClient('liquidParadox', 'Liquid Paradox', serverOptions, clientOptions);

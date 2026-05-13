@@ -9,5 +9,5 @@ await build({
   outfile: 'dist/extension.js',
   external: ['vscode'],
   sourcemap: true,
-  logLevel: 'info'
+  logLevel: 'info',
 });

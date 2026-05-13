@@ -2,18 +2,26 @@
   "name": "vscode-liquid-paradox-monorepo",
   "private": true,
   "version": "0.0.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "eslint 'packages/**/src/**/*.ts'",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "typescript": "^5.5.0",
     "@types/node": "^20.14.0",
     "esbuild": "^0.21.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.0.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "prettier": "^3.3.0"
   },
   "packageManager": "pnpm@9.6.0"
 }

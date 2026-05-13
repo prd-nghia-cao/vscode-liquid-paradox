@@ -5,22 +5,41 @@
   "description": "IntelliSense for LiquidJS templates in Paradox by Workday projects.",
   "version": "0.0.1",
   "publisher": "local-dev",
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Programming Languages"],
-  "activationEvents": ["onLanguage:liquid"],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:liquid"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
-    "languages": [{
-      "id": "liquid",
-      "aliases": ["Liquid", "liquid"],
-      "extensions": [".liquid"]
-    }],
-    "grammars": [{
-      "scopeName": "paradox.injection",
-      "path": "./syntaxes/paradox-injection.tmLanguage.json",
-      "injectTo": ["text.html.liquid"]
-    }],
-    "extensionDependencies": ["sissel.shopify-liquid"]
+    "languages": [
+      {
+        "id": "liquid",
+        "aliases": [
+          "Liquid",
+          "liquid"
+        ],
+        "extensions": [
+          ".liquid"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "scopeName": "paradox.injection",
+        "path": "./syntaxes/paradox-injection.tmLanguage.json",
+        "injectTo": [
+          "text.html.liquid"
+        ]
+      }
+    ],
+    "extensionDependencies": [
+      "sissel.shopify-liquid"
+    ]
   },
   "scripts": {
     "build": "node esbuild.config.mjs",

@@ -9,5 +9,5 @@ await build({
   outfile: 'dist/server.js',
   external: [],
   sourcemap: true,
-  logLevel: 'info'
+  logLevel: 'info',
 });
