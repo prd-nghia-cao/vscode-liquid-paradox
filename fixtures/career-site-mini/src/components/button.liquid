@@ -1,0 +1,4 @@
+{% assign type = type | default: 'primary' %}
+{% assign text = text | default: 'Learn more' %}
+{% assign customClass = class | default: '' %}
+<button class="btn-{{ type }} {{ customClass }}">{{ text }}</button>
