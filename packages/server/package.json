@@ -1,0 +1,25 @@
+{
+  "name": "@vscode-liquid-paradox/server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./dist/server.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "liquidjs": "^10.16.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "typescript": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "esbuild": "^0.21.0",
+    "vitest": "^2.0.0"
+  }
+}
