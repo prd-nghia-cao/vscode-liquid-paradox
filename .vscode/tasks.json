@@ -4,7 +4,12 @@
     {
       "label": "build:all",
       "type": "shell",
-      "command": "pnpm -r build",
+      "command": "pnpm --filter @vscode-liquid-paradox/server build && pnpm --filter vscode-liquid-paradox build",
+      "options": {
+        "env": {
+          "NODE_ENV": "development"
+        }
+      },
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     },
@@ -12,6 +17,11 @@
       "label": "watch:server",
       "type": "shell",
       "command": "pnpm --filter @vscode-liquid-paradox/server build -- --watch",
+      "options": {
+        "env": {
+          "NODE_ENV": "development"
+        }
+      },
       "isBackground": true,
       "problemMatcher": []
     }

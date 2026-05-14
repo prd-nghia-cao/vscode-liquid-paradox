@@ -3,8 +3,16 @@
   "private": true,
   "displayName": "Liquid Paradox",
   "description": "IntelliSense and syntax highlighting for LiquidJS templates in Paradox by Workday projects.",
-  "version": "0.0.2",
+  "version": "1.0.1",
   "publisher": "local-dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prd-nghia-cao/vscode-liquid-paradox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/prd-nghia-cao/vscode-liquid-paradox/issues"
+  },
+  "homepage": "https://github.com/prd-nghia-cao/vscode-liquid-paradox#readme",
   "engines": {
     "vscode": "^1.90.0"
   },

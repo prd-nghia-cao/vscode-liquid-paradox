@@ -4,19 +4,20 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [20]
+        node: [24]
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
         with:
           version: 9.6.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node }}
           cache: pnpm
@@ -25,7 +26,47 @@ jobs:
       - run: pnpm --filter @vscode-liquid-paradox/server test
       - run: pnpm --filter vscode-liquid-paradox build
       - run: pnpm --filter vscode-liquid-paradox package
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: vsix
           path: packages/client/*.vsix
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with:
+          name: vsix
+          path: packages/client
+      - name: Verify tag matches packages/client/package.json version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(node -p "require('./packages/client/package.json').version")
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::Tag v$tag does not match package version $pkg"
+            exit 1
+          fi
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" '
+            $0 == "## " v { flag=1; next }
+            flag && /^## / { exit }
+            flag { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No changelog section found for $version" > release-notes.md
+          fi
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: packages/client/*.vsix
+          fail_on_unmatched_files: true

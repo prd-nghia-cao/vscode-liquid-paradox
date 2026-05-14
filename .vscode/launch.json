@@ -18,7 +18,10 @@
       "request": "attach",
       "port": 6009,
       "restart": true,
-      "outFiles": ["${workspaceFolder}/packages/server/dist/**/*.{js,cjs}"]
+      "outFiles": [
+        "${workspaceFolder}/packages/client/dist/**/*.{js,cjs}",
+        "${workspaceFolder}/packages/server/dist/**/*.{js,cjs}"
+      ]
     }
   ]
 }

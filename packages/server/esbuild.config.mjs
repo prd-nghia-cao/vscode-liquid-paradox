@@ -1,5 +1,7 @@
 import { build } from 'esbuild';
 
+const dev = process.env.NODE_ENV === 'development';
+
 await build({
   entryPoints: ['src/server.ts'],
   bundle: true,
@@ -8,6 +10,7 @@ await build({
   format: 'cjs',
   outfile: 'dist/server.cjs',
   external: [],
-  sourcemap: true,
+  minify: !dev,
+  sourcemap: dev,
   logLevel: 'info',
 });
