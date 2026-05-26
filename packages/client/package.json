@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "Liquid Paradox",
   "description": "IntelliSense and syntax highlighting for LiquidJS templates in Paradox by Workday projects.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "local-dev",
   "repository": {
     "type": "git",
@@ -53,7 +53,12 @@
           "text.html.liquid"
         ]
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "emmet.includeLanguages": {
+        "liquid": "html"
+      }
+    }
   },
   "scripts": {
     "build": "node esbuild.config.mjs",

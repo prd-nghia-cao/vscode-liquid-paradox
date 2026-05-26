@@ -2,6 +2,11 @@
 
 All notable changes to **Liquid Paradox** are documented in this file.
 
+## 1.0.2
+
+### Added
+- Emmet abbreviation expansion is enabled by default for `.liquid` files. The extension now contributes `"emmet.includeLanguages": { "liquid": "html" }` via `configurationDefaults`, so abbreviations like `ul>li*3` and `.btn--primary` expand inside HTML regions of `.liquid` files without any user setup. Emmet stays silent inside `{% … %}` and `{{ … }}` regions — LSP completions remain authoritative there. Users can opt out by adding `"emmet.excludeLanguages": ["liquid"]` to their `settings.json`; any user-defined `emmet.includeLanguages` value continues to take precedence over the extension default. Coexistence with `sissel.shopify-liquid` is unaffected.
+
 ## 0.0.3
 
 ### Fixed
