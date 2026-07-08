@@ -11,6 +11,8 @@ import {
   CompletionItemKind,
   type Diagnostic as LspDiagnostic,
   type Definition,
+  type Position,
+  type LinkedEditingRanges,
 } from 'vscode-languageserver/node.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as fs from 'node:fs';
@@ -23,6 +25,12 @@ import { COMPLETION_TRIGGER_CHARACTERS } from './serverCapabilities.js';
 import { provideHover } from './providers/hover.js';
 import { provideDefinition } from './providers/definition.js';
 import { provideDiagnostics, type Severity } from './providers/diagnostics.js';
+import {
+  getHtmlService,
+  getHtmlContext,
+  isInHtmlRegion,
+  disposeHtmlContext,
+} from './providers/html/htmlService.js';
 import { routeFileEvent } from './workspace/watchers.js';
 
 export function createServer(): void {
@@ -30,7 +38,7 @@ export function createServer(): void {
   const documents = new TextDocuments(TextDocument);
 
   let workspaceRoot: string | undefined;
-  let state = createServerState({
+  const state = createServerState({
     readVite: () => {
       if (!workspaceRoot) return undefined;
       const p = path.join(workspaceRoot, 'vite.config.ts');
@@ -64,6 +72,7 @@ export function createServer(): void {
         },
         hoverProvider: true,
         definitionProvider: true,
+        linkedEditingRangeProvider: true,
       },
     };
   });
@@ -86,6 +95,7 @@ export function createServer(): void {
   documents.onDidClose((e) => {
     state.documentStore.remove(e.document.uri);
     state.depGraph.remove(e.document.uri);
+    disposeHtmlContext(e.document.uri);
     connection.sendDiagnostics({ uri: e.document.uri, diagnostics: [] });
   });
 
@@ -94,6 +104,16 @@ export function createServer(): void {
     if (!doc) {
       connection.console.log(`[completion] no document for ${params.textDocument.uri}`);
       return [];
+    }
+    const htmlText = doc.getText();
+    const htmlOffset = doc.offsetAt(params.position);
+    const htmlCtx = getHtmlContext(doc.uri, doc.version, htmlText);
+    if (isInHtmlRegion(htmlText, htmlOffset, htmlCtx.spans)) {
+      const list = getHtmlService().doComplete(htmlCtx.virtualDoc, params.position, htmlCtx.htmlDoc);
+      connection.console.log(
+        `[completion] pos=L${params.position.line}:C${params.position.character} region=html items=${list.items.length}`,
+      );
+      return list.items;
     }
     const model = state.documentStore.update(doc.uri, doc.getText());
     const triggerKind = toInternalTriggerKind(params.context?.triggerKind);
@@ -136,10 +156,40 @@ export function createServer(): void {
   connection.onHover((params) => {
     const doc = documents.get(params.textDocument.uri);
     if (!doc) return null;
+    const hoverText = doc.getText();
+    const hoverOffset = doc.offsetAt(params.position);
+    const hoverCtx = getHtmlContext(doc.uri, doc.version, hoverText);
+    if (isInHtmlRegion(hoverText, hoverOffset, hoverCtx.spans)) {
+      return getHtmlService().doHover(hoverCtx.virtualDoc, params.position, hoverCtx.htmlDoc);
+    }
     const model = state.documentStore.update(doc.uri, doc.getText());
     const h = provideHover(model, params.position, { fileIndex: state.fileIndex });
     if (!h) return null;
     return { contents: { kind: 'markdown', value: h.markdown }, range: h.range };
+  });
+
+  connection.onRequest(
+    'liquid/tagClose',
+    (params: { textDocument: { uri: string }; position: Position }): string | null => {
+      const doc = documents.get(params.textDocument.uri);
+      if (!doc) return null;
+      const text = doc.getText();
+      const offset = doc.offsetAt(params.position);
+      const ctx = getHtmlContext(doc.uri, doc.version, text);
+      if (!isInHtmlRegion(text, offset, ctx.spans)) return null;
+      return getHtmlService().doTagComplete(ctx.virtualDoc, params.position, ctx.htmlDoc);
+    },
+  );
+
+  connection.languages.onLinkedEditingRange((params): LinkedEditingRanges | null => {
+    const doc = documents.get(params.textDocument.uri);
+    if (!doc) return null;
+    const text = doc.getText();
+    const offset = doc.offsetAt(params.position);
+    const ctx = getHtmlContext(doc.uri, doc.version, text);
+    if (!isInHtmlRegion(text, offset, ctx.spans)) return null;
+    const ranges = getHtmlService().findLinkedEditingRanges(ctx.virtualDoc, params.position, ctx.htmlDoc);
+    return ranges ? { ranges } : null;
   });
 
   connection.onDefinition((params): Definition | null => {

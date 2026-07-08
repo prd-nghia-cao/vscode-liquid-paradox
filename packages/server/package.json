@@ -1,7 +1,7 @@
 {
   "name": "@vscode-liquid-paradox/server",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.1.1",
   "type": "module",
   "main": "./dist/server.cjs",
   "scripts": {
@@ -14,6 +14,7 @@
   "dependencies": {
     "liquidjs": "^10.16.0",
     "typescript": "^5.5.0",
+    "vscode-html-languageservice": "^5.6.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
   },

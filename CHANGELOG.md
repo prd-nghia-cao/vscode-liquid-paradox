@@ -2,6 +2,17 @@
 
 All notable changes to **Liquid Paradox** are documented in this file.
 
+## 1.1.0
+
+### Added
+- HTML IntelliSense inside the HTML regions of `.liquid` files, served by an embedded `vscode-html-languageservice` over a Liquid-masked virtual document:
+  - Tag-name completions (after `<`), attribute-name completions, and attribute-value completions sourced from the HTML5 data set.
+  - HTML element and attribute hover documentation.
+  - Auto-closing tags — typing `<section>` inserts `</section>` with the cursor between the tags (driven by a `liquid/tagClose` request gated to HTML regions).
+  - Tag-pair linked editing — renaming a start tag renames its matching end tag and vice versa (`linkedEditingRangeProvider`).
+  - HTML features are confined to HTML regions; inside `{% … %}`, `{{ … }}`, `{# … #}`, and `{% comment %}` regions the Liquid LSP stays authoritative and HTML IntelliSense stays silent.
+  - The server advertises the additional completion trigger characters `<`, `=`, `/` alongside the existing Liquid set. Emmet continues to work in HTML regions as before.
+
 ## 1.0.2
 
 ### Added

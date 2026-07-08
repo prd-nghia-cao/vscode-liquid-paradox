@@ -1,7 +1,7 @@
 {
   "name": "vscode-liquid-paradox-monorepo",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.1",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/prd-nghia-cao/vscode-liquid-paradox.git"

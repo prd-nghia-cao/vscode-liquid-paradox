@@ -10,7 +10,7 @@ triggers them, and what items they produce. Each surface is implemented in
 The LSP advertises the following `completionProvider.triggerCharacters`:
 
 ```
-{ % } | " ' . , : - <space>
+{ % } | " ' . , : - <space> < = /
 ```
 
 `'{'`, `'%'`, `'}'` cover the Liquid delimiters; `'|'` opens the filter list;
@@ -18,7 +18,10 @@ The LSP advertises the following `completionProvider.triggerCharacters`:
 completions; `','` opens render-kwarg completions; `':'` triggers Paradox-kind
 value completions; `'-'` handles the `{%-` / `{{-` whitespace-strip variants;
 `' '` keeps completions alive as the user types through a multi-token tag body
-(e.g. `{% for x in `).
+(e.g. `{% for x in `). The final three — `'<'`, `'='`, `'/'` — drive HTML
+IntelliSense in HTML regions (tag-name, attribute, and attribute-value
+completions, plus auto-closing tags); they are routed to the embedded HTML
+language service and are inert inside Liquid constructs.
 
 ## Cursor regions
 
@@ -38,7 +41,32 @@ value completions; `'-'` handles the `{%-` / `{{-` whitespace-strip variants;
 | `string-include-path`   | Cursor inside the string literal of `{% include "…`           | Same as `string-render-path`                                                       |
 | `string-layout-path`    | Cursor inside the string literal of `{% layout "…`            | Layout (`File`) keys from the workspace index                                      |
 | `render-args`           | Cursor inside `{% render "name", `                            | Component props for the named component (`Property` kind, with type and default)   |
-| `text`                  | Cursor in plain HTML / Liquid output                          | `[]`                                                                               |
+| `text`                  | Cursor in plain HTML (no enclosing Liquid construct)          | Served by the embedded HTML language service — see "HTML regions" below. The Liquid provider itself returns `[]` here. |
+
+## HTML regions
+
+Everything outside `{% … %}`, `{{ … }}`, `{# … #}`, and `{% comment %}` blocks is
+an **HTML region**. These regions are served by an embedded
+`vscode-html-languageservice` running inside the LSP server against a *virtual
+HTML document* — a copy of the `.liquid` text with every Liquid span replaced by
+whitespace (so character offsets and line/column positions map 1:1). The
+implementation lives in `packages/server/src/providers/html/`.
+
+| Surface                 | Trigger                                                       | Items / behavior                                                                   |
+|-------------------------|---------------------------------------------------------------|------------------------------------------------------------------------------------|
+| Tag-name completion     | Typing `<` / a partial tag name in an HTML region            | HTML5 element names (`div`, `section`, …), inserted as start tags                  |
+| Attribute completion    | Cursor inside an open start tag (`<a … `)                    | HTML attribute names, inserted as `name="$1"`                                      |
+| Attribute-value completion | Cursor inside an attribute value (`type="…"`)            | Valid values for the attribute (`text`, `checkbox`, …)                             |
+| Hover                   | Hovering an HTML element / attribute                         | Standard HTML documentation                                                        |
+| Auto-closing tags       | Typing `>` / `/` that finishes a start tag                  | Inserts the matching close tag via the `liquid/tagClose` request                  |
+| Tag-pair linked editing | Cursor on a start/end tag name                              | Renames the paired tag (`linkedEditingRangeProvider`)                              |
+
+Region gating uses a single helper (`isInHtmlRegion`): a position is HTML only
+when it is outside every complete Liquid span **and** `bucketCursor` classifies
+it as `text` (which also rejects partially-typed / unbalanced delimiters such as
+an unclosed `{{`). Inside any Liquid construct the HTML language service stays
+silent and the Liquid surfaces above remain authoritative. `{% raw %}` bodies are
+treated as HTML, since their contents are emitted verbatim as markup.
 
 ## Dotted property access
 

@@ -1,4 +1,5 @@
 import { build } from 'esbuild';
+import { readFile } from 'node:fs/promises';
 
 const dev = process.env.NODE_ENV === 'development';
 
@@ -8,9 +9,29 @@ await build({
   platform: 'node',
   target: 'node20',
   format: 'cjs',
+  // Prefer each dependency's ESM (`module`) entry over its CommonJS/UMD `main`.
+  // vscode-html-languageservice ships a UMD `main` whose internal modules are
+  // pulled in via a factory-injected `require('./parser/...')`; esbuild leaves
+  // those as runtime requires, so the bundle fails at load with
+  // "Cannot find module './parser/htmlScanner'". Its ESM build uses static
+  // imports that esbuild can fully inline.
+  mainFields: ['module', 'main'],
   outfile: 'dist/server.cjs',
   external: [],
   minify: !dev,
   sourcemap: dev,
   logLevel: 'info',
 });
+
+// Defense-in-depth: fail the build loudly if any dependency's internal modules
+// were left as runtime relative requires instead of being inlined. This is the
+// signature of the vscode-html-languageservice UMD-vs-ESM bundling bug
+// ("Cannot find module './parser/htmlScanner'") that `mainFields` above fixes.
+const bundle = await readFile('dist/server.cjs', 'utf8');
+const unbundled = bundle.match(/require\d*\(\s*["']\.\/(parser|services|languageFacts)\/[^"']+["']\)/);
+if (unbundled) {
+  throw new Error(
+    `Bundle contains an unbundled relative require (${unbundled[0]}). ` +
+      'The HTML language service was not fully inlined — check esbuild `mainFields`.',
+  );
+}

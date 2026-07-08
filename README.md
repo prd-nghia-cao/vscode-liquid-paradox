@@ -17,6 +17,7 @@ VS Code IntelliSense for LiquidJS templates in Paradox by Workday static-site pr
 - Sibling `.liquid.json` data files surfaced as typed variables
 - Paradox backend tags (`{{component:...}}`, `{{snippet:...}}`, `{{data:...}}`, `{{attribute:...}}`) with hover-only docs
 - Emmet abbreviation expansion enabled out of the box inside HTML regions of `.liquid` files (`ul>li*3`, `.btn--primary`, BEM, etc.). Emmet stays silent inside `{% … %}` and `{{ … }}` so LSP completions remain authoritative. To opt out, add `"emmet.excludeLanguages": ["liquid"]` to your `settings.json`.
+- HTML IntelliSense inside HTML regions of `.liquid` files: tag-name completions (after `<`), attribute-name and attribute-value completions, HTML element/attribute hover docs, auto-closing tags (typing `<section>` inserts `</section>`), and tag-pair linked editing (renaming a start tag renames its end tag). These are served by an embedded HTML language service and stay silent inside `{% … %}`, `{{ … }}`, `{# … #}`, and `{% comment %}` regions, where the Liquid LSP remains authoritative.
 
 See `docs/completion-surfaces.md` for the full matrix of completion regions and what each one offers.
 

@@ -14,9 +14,22 @@ describe('LSP server capabilities', () => {
     expect(unique.size).toBe(COMPLETION_TRIGGER_CHARACTERS.length);
   });
 
-  it('matches the spec snapshot (Decision 1: 11 characters)', () => {
+  it('includes the HTML IntelliSense trigger characters', () => {
+    for (const ch of ['<', '=', '/']) {
+      expect(COMPLETION_TRIGGER_CHARACTERS).toContain(ch);
+    }
+  });
+
+  it('retains every Liquid trigger character alongside the HTML additions', () => {
+    const liquid = ['{', '%', '}', '|', '"', "'", '.', ',', ':', '-', ' '];
+    for (const ch of liquid) {
+      expect(COMPLETION_TRIGGER_CHARACTERS).toContain(ch);
+    }
+  });
+
+  it('matches the full trigger-character set (Liquid + HTML)', () => {
     expect([...COMPLETION_TRIGGER_CHARACTERS].sort()).toEqual(
-      [' ', '"', '%', "'", ',', '-', '.', ':', '{', '|', '}'].sort(),
+      [' ', '"', '%', "'", ',', '-', '.', '/', ':', '<', '=', '{', '|', '}'].sort(),
     );
   });
 });
