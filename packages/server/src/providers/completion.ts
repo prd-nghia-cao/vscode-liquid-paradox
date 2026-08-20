@@ -8,6 +8,7 @@ import { LIQUID_OPERATORS } from '../data/operators.js';
 import { TAG_CONTINUATIONS, tagWantsOperators, tagWantsVariables } from '../data/tagContinuations.js';
 import { PARADOX_KINDS, PARADOX_TAGS } from '../data/paradoxTags.js';
 import { bucketCursor, dottedPathBefore, type CursorBucket } from './bucketCursor.js';
+import { renderArgNames } from '../analyzer/renderArgs.js';
 
 export interface CompletionItem {
   label: string;
@@ -95,11 +96,17 @@ function collectItems(
       if (!ctx.fileIndex.components.has(key)) return [];
       const props = ctx.lookupComponentProps(key);
       if (!props) return [];
-      return props.map((p) => ({
-        label: p.name,
-        kind: 'Property' as const,
-        detail: `${typeLabel(p.type)} = ${p.origin.kind === 'componentProp' ? p.origin.defaultValue : ''}`,
-      }));
+      // Args already written in this tag are dropped so the list only offers
+      // what is still missing.
+      const alreadyGiven = new Set(renderArgNames(bucket.body));
+      return props
+        .filter((p) => !alreadyGiven.has(p.name))
+        .map((p) => ({
+          label: p.name,
+          kind: 'Property' as const,
+          detail: `${typeLabel(p.type)} = ${p.origin.kind === 'componentProp' ? p.origin.defaultValue : ''}`,
+          insertText: `${p.name}: `,
+        }));
     }
   }
 }
@@ -114,12 +121,7 @@ function collectItems(
  * skipped — padding only applies inside `{% … %}` / `{{ … }}` bodies and the
  * pipe-completion regions.
  */
-function applyPadding(
-  items: CompletionItem[],
-  bucket: CursorBucket,
-  text: string,
-  offset: number,
-): CompletionItem[] {
+function applyPadding(items: CompletionItem[], bucket: CursorBucket, text: string, offset: number): CompletionItem[] {
   if (items.length === 0) return items;
   if (!isPaddableRegion(bucket.region)) return items.map(stripPadFlag);
 

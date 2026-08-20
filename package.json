@@ -1,7 +1,7 @@
 {
   "name": "vscode-liquid-paradox-monorepo",
   "private": true,
-  "version": "1.1.1",
+  "version": "1.5.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/prd-nghia-cao/vscode-liquid-paradox.git"
@@ -14,7 +14,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm --filter @vscode-liquid-paradox/server build && pnpm --filter @vscode-liquid-paradox/server smoke && pnpm --filter vscode-liquid-paradox build",
+    "smoke": "pnpm --filter @vscode-liquid-paradox/server smoke",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "eslint 'packages/**/src/**/*.ts'",

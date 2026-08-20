@@ -1,4 +1,4 @@
-import { Tokenizer } from 'liquidjs';
+import { Tokenizer, TokenKind } from 'liquidjs';
 import type { Range } from '../types.js';
 
 export type Token =
@@ -45,9 +45,14 @@ export function tokenize(source: string): TokenizeResult {
         const begin = cursor + t.begin;
         const end = cursor + t.end;
         const range = makeRange(source, begin, end);
-        const ctorName = t.constructor.name;
+        // liquidjs stamps every token with a numeric `kind` from its own
+        // TokenKind enum. Branch on that, never on `t.constructor.name`: the
+        // production bundle is minified, which renames liquidjs's TagToken /
+        // OutputToken classes and would send every token down the `html`
+        // branch — collapsing the whole document into one HTML blob.
+        const kind = (t as unknown as { kind?: number }).kind;
 
-        if (ctorName === 'TagToken') {
+        if (kind === TokenKind.Tag) {
           const name = String((t as unknown as { name?: string }).name);
           const args = String((t as unknown as { args?: string }).args ?? '').trim();
           const innerStart = begin + 2;
@@ -59,7 +64,7 @@ export function tokenize(source: string): TokenizeResult {
             range,
             rawRange: makeRange(source, innerStart, innerEnd),
           });
-        } else if (ctorName === 'OutputToken') {
+        } else if (kind === TokenKind.Output) {
           const contentRange = (t as unknown as { contentRange?: [number, number] }).contentRange;
           const content = contentRange
             ? source.slice(cursor + contentRange[0], cursor + contentRange[1]).trim()

@@ -54,6 +54,9 @@ importers:
 
   packages/server:
     dependencies:
+      jsonc-parser:
+        specifier: ^3.3.1
+        version: 3.3.1
       liquidjs:
         specifier: ^10.16.0
         version: 10.25.7

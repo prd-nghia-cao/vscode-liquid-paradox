@@ -11,27 +11,34 @@ import {
   CompletionItemKind,
   type Diagnostic as LspDiagnostic,
   type Definition,
-  type Position,
-  type LinkedEditingRanges,
 } from 'vscode-languageserver/node.js';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createServerState } from './serverState.js';
 import { buildFileIndex } from './workspace/fileIndex.js';
+import { applyAssetEvent, buildAssetIndex } from './workspace/assetIndex.js';
 import { buildWatcherRegistrations } from './workspace/watchers.js';
 import { provideCompletions, type CompletionTriggerKind as InternalTriggerKind } from './providers/completion.js';
 import { COMPLETION_TRIGGER_CHARACTERS } from './serverCapabilities.js';
 import { provideHover } from './providers/hover.js';
 import { provideDefinition } from './providers/definition.js';
 import { provideDiagnostics, type Severity } from './providers/diagnostics.js';
-import {
-  getHtmlService,
-  getHtmlContext,
-  isInHtmlRegion,
-  disposeHtmlContext,
-} from './providers/html/htmlService.js';
+import { getHtmlService, getHtmlContext, isInHtmlRegion, disposeHtmlContext } from './providers/html/htmlService.js';
+import { assetAttributeAt } from './providers/html/assetAttribute.js';
+import { assetCompletions, type AssetCompletionItem } from './providers/assetCompletion.js';
+import { jsonAssetContextAt } from './providers/json/jsonAssetContext.js';
 import { routeFileEvent } from './workspace/watchers.js';
+
+/**
+ * A `.liquid.json` sidecar holds a template's data, not Liquid source. Those
+ * documents are synced only so media keys can offer assets, so every
+ * Liquid-analyzing handler must skip them — the tokenizer would report the whole
+ * file as errors.
+ */
+function isJsonSidecar(uri: string): boolean {
+  return uri.endsWith('.liquid.json');
+}
 
 export function createServer(): void {
   const connection = createConnection(ProposedFeatures.all);
@@ -41,9 +48,13 @@ export function createServer(): void {
   const state = createServerState({
     readVite: () => {
       if (!workspaceRoot) return undefined;
-      const p = path.join(workspaceRoot, 'vite.config.ts');
+      const found = findViteConfig(workspaceRoot);
+      if (!found) {
+        connection.console.log(`[config] no vite config found under ${workspaceRoot} — path features disabled`);
+        return undefined;
+      }
       try {
-        return { text: fs.readFileSync(p, 'utf8'), repoRoot: workspaceRoot };
+        return { text: fs.readFileSync(found, 'utf8'), repoRoot: path.dirname(found) };
       } catch {
         return undefined;
       }
@@ -56,9 +67,44 @@ export function createServer(): void {
       }
     },
     buildFileIndex: (dirs) => buildFileIndex({ ...dirs, fs: fs.promises }),
+    buildAssetIndex: (dirs) => buildAssetIndex({ assetsDir: dirs.assetsDir, fs: fs.promises }),
   });
 
   const debounceTimers = new Map<string, NodeJS.Timeout>();
+
+  /**
+   * Locates the site's vite config. Prefers the workspace root, then falls back
+   * to a shallow (depth-2) scan so that opening a parent folder — or a monorepo
+   * whose site lives in a subdirectory — still enables the path features that
+   * `{% render %}` argument completion depends on.
+   */
+  function findViteConfig(root: string): string | undefined {
+    const names = ['vite.config.ts', 'vite.config.mts', 'vite.config.js', 'vite.config.mjs', 'vite.config.cjs'];
+    const inDir = (dir: string): string | undefined => {
+      for (const name of names) {
+        const p = path.join(dir, name);
+        if (fs.existsSync(p)) return p;
+      }
+      return undefined;
+    };
+
+    const atRoot = inDir(root);
+    if (atRoot) return atRoot;
+
+    const skip = new Set(['node_modules', 'dist', 'build', 'out', '.git', 'coverage']);
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(root, { withFileTypes: true });
+    } catch {
+      return undefined;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || skip.has(entry.name) || entry.name.startsWith('.')) continue;
+      const found = inDir(path.join(root, entry.name));
+      if (found) return found;
+    }
+    return undefined;
+  }
 
   connection.onInitialize((params): InitializeResult => {
     workspaceRoot = params.rootUri
@@ -72,13 +118,13 @@ export function createServer(): void {
         },
         hoverProvider: true,
         definitionProvider: true,
-        linkedEditingRangeProvider: true,
       },
     };
   });
 
   connection.onInitialized(async () => {
     await state.refreshConfig();
+    connection.console.log(`[config] root=${workspaceRoot} — ${state.configStatus}`);
     if (state.dirs) {
       const regs = buildWatcherRegistrations(state.dirs);
       await connection.client.register(DidChangeWatchedFilesNotification.type, {
@@ -86,12 +132,16 @@ export function createServer(): void {
       });
     }
     for (const doc of documents.all()) {
-      analyzeAndPublish(doc);
+      if (!isJsonSidecar(doc.uri)) analyzeAndPublish(doc);
     }
   });
 
-  documents.onDidOpen((e) => analyzeAndPublish(e.document));
-  documents.onDidChangeContent((e) => debouncedDiagnose(e.document));
+  documents.onDidOpen((e) => {
+    if (!isJsonSidecar(e.document.uri)) analyzeAndPublish(e.document);
+  });
+  documents.onDidChangeContent((e) => {
+    if (!isJsonSidecar(e.document.uri)) debouncedDiagnose(e.document);
+  });
   documents.onDidClose((e) => {
     state.documentStore.remove(e.document.uri);
     state.depGraph.remove(e.document.uri);
@@ -105,10 +155,30 @@ export function createServer(): void {
       connection.console.log(`[completion] no document for ${params.textDocument.uri}`);
       return [];
     }
+    if (isJsonSidecar(doc.uri)) {
+      const jsonCtx = jsonAssetContextAt(doc.getText(), doc.offsetAt(params.position));
+      const items = jsonCtx ? assetCompletions(state.assetIndex, jsonCtx, (o) => doc.positionAt(o)) : [];
+      connection.console.log(
+        `[completion] pos=L${params.position.line}:C${params.position.character} ` +
+          `region=json-sidecar(${jsonCtx?.keyPath ?? 'none'}) items=${items.length}`,
+      );
+      return items.map(toAssetItem);
+    }
     const htmlText = doc.getText();
     const htmlOffset = doc.offsetAt(params.position);
     const htmlCtx = getHtmlContext(doc.uri, doc.version, htmlText);
     if (isInHtmlRegion(htmlText, htmlOffset, htmlCtx.spans)) {
+      // `src` / `srcset` / `poster` values get assets from the workspace's
+      // static asset directory instead of the HTML service's (empty) value set.
+      const assetCtx = assetAttributeAt(htmlCtx.virtualDoc.getText(), htmlCtx.htmlDoc, htmlOffset);
+      if (assetCtx) {
+        const items = assetCompletions(state.assetIndex, assetCtx, (o) => htmlCtx.virtualDoc.positionAt(o));
+        connection.console.log(
+          `[completion] pos=L${params.position.line}:C${params.position.character} ` +
+            `region=asset(${assetCtx.tag}@${assetCtx.attribute}) items=${items.length}`,
+        );
+        return items.map(toAssetItem);
+      }
       const list = getHtmlService().doComplete(htmlCtx.virtualDoc, params.position, htmlCtx.htmlDoc);
       connection.console.log(
         `[completion] pos=L${params.position.line}:C${params.position.character} region=html items=${list.items.length}`,
@@ -145,6 +215,17 @@ export function createServer(): void {
     );
   });
 
+  function toAssetItem(i: AssetCompletionItem): LspCompletionItem {
+    return {
+      label: i.label,
+      kind: CompletionItemKind.File,
+      detail: i.detail,
+      filterText: i.filterText,
+      sortText: i.sortText,
+      textEdit: i.textEdit,
+    };
+  }
+
   function describeCursor(text: string, pos: { line: number; character: number }): string {
     const lines = text.split('\n');
     const line = lines[pos.line] ?? '';
@@ -155,7 +236,7 @@ export function createServer(): void {
 
   connection.onHover((params) => {
     const doc = documents.get(params.textDocument.uri);
-    if (!doc) return null;
+    if (!doc || isJsonSidecar(doc.uri)) return null;
     const hoverText = doc.getText();
     const hoverOffset = doc.offsetAt(params.position);
     const hoverCtx = getHtmlContext(doc.uri, doc.version, hoverText);
@@ -168,33 +249,9 @@ export function createServer(): void {
     return { contents: { kind: 'markdown', value: h.markdown }, range: h.range };
   });
 
-  connection.onRequest(
-    'liquid/tagClose',
-    (params: { textDocument: { uri: string }; position: Position }): string | null => {
-      const doc = documents.get(params.textDocument.uri);
-      if (!doc) return null;
-      const text = doc.getText();
-      const offset = doc.offsetAt(params.position);
-      const ctx = getHtmlContext(doc.uri, doc.version, text);
-      if (!isInHtmlRegion(text, offset, ctx.spans)) return null;
-      return getHtmlService().doTagComplete(ctx.virtualDoc, params.position, ctx.htmlDoc);
-    },
-  );
-
-  connection.languages.onLinkedEditingRange((params): LinkedEditingRanges | null => {
-    const doc = documents.get(params.textDocument.uri);
-    if (!doc) return null;
-    const text = doc.getText();
-    const offset = doc.offsetAt(params.position);
-    const ctx = getHtmlContext(doc.uri, doc.version, text);
-    if (!isInHtmlRegion(text, offset, ctx.spans)) return null;
-    const ranges = getHtmlService().findLinkedEditingRanges(ctx.virtualDoc, params.position, ctx.htmlDoc);
-    return ranges ? { ranges } : null;
-  });
-
   connection.onDefinition((params): Definition | null => {
     const doc = documents.get(params.textDocument.uri);
-    if (!doc) return null;
+    if (!doc || isJsonSidecar(doc.uri)) return null;
     const model = state.documentStore.update(doc.uri, doc.getText());
     const d = provideDefinition(model, params.position, { fileIndex: state.fileIndex });
     return d ? { uri: d.uri, range: d.range } : null;
@@ -220,12 +277,21 @@ export function createServer(): void {
       if (out.rebuildIndex) needRebuild = true;
       if (out.invalidateJsonPath) state.invalidateJsonCompanion(out.invalidateJsonPath);
       if (out.invalidateComponentPropsKey) state.invalidateComponentProps(out.invalidateComponentPropsKey);
+      if (out.assetEvent) {
+        let size = 0;
+        try {
+          size = fs.statSync(out.assetEvent.absPath).size;
+        } catch {
+          // Deleted files have no size; applyAssetEvent ignores it for removals.
+        }
+        applyAssetEvent(state.assetIndex, state.dirs.assetsDir, out.assetEvent.absPath, out.assetEvent.event, size);
+      }
       for (const u of out.urisToRediagnose) allRediag.add(u);
     }
     if (needRebuild) await state.refreshConfig();
     for (const uri of allRediag) {
       const doc = documents.get(uri);
-      if (doc) analyzeAndPublish(doc);
+      if (doc && !isJsonSidecar(uri)) analyzeAndPublish(doc);
     }
   });
 

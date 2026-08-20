@@ -348,16 +348,13 @@ describe('provideCompletions — auto whitespace padding', () => {
       }),
     );
     const typeItem = items.find((i) => i.label === 'type');
-    // No insertText override means the label is inserted verbatim.
-    expect(typeItem?.insertText).toBeUndefined();
+    // `name: ` is the region's own insertText — padding would have added a
+    // leading/trailing space on top of it.
+    expect(typeItem?.insertText).toBe('type: ');
   });
 
   it('string-render-path region does NOT get padded', () => {
-    const items = provideCompletions(
-      model('{% render "'),
-      { line: 0, character: 11 },
-      ctx({ fileIndex: fullIndex }),
-    );
+    const items = provideCompletions(model('{% render "'), { line: 0, character: 11 }, ctx({ fileIndex: fullIndex }));
     const button = items.find((i) => i.label === 'button');
     expect(button?.insertText).toBeUndefined();
   });

@@ -7,6 +7,7 @@ describe('createServerState', () => {
       readVite: () => undefined,
       readFileSync: () => undefined,
       buildFileIndex: async () => ({ components: new Map(), partials: new Map(), layouts: new Map() }),
+      buildAssetIndex: async () => ({ assets: new Map() }),
     });
     expect(state.pathFeaturesEnabled).toBe(false);
     expect(state.dirs).toBeUndefined();
@@ -20,6 +21,7 @@ describe('createServerState', () => {
       }),
       readFileSync: () => undefined,
       buildFileIndex: async () => ({ components: new Map(), partials: new Map(), layouts: new Map() }),
+      buildAssetIndex: async () => ({ assets: new Map() }),
     });
     await state.refreshConfig();
     expect(state.pathFeaturesEnabled).toBe(true);
@@ -38,6 +40,7 @@ describe('createServerState', () => {
         partials: new Map(),
         layouts: new Map(),
       }),
+      buildAssetIndex: async () => ({ assets: new Map() }),
     });
     await state.refreshConfig();
     const first = state.lookupComponentProps('button');

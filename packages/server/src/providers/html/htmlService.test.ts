@@ -67,26 +67,12 @@ describe('HTML hover', () => {
   });
 });
 
-describe('auto-closing tags', () => {
-  it('returns the matching close-tag snippet for a start tag', () => {
-    const { ctx, position } = setup('<section>|');
-    const snippet = getHtmlService().doTagComplete(ctx.virtualDoc, position, ctx.htmlDoc);
-    expect(snippet).toContain('</section>');
-  });
-
-  it('does not fire for > typed inside a Liquid tag', () => {
+describe('HTML region gating', () => {
+  it('rejects a position inside a Liquid tag', () => {
     expect(inHtmlRegion('{% if a >| 1 %}')).toBe(false);
   });
-});
 
-describe('tag-pair linked editing', () => {
-  it('returns the matching start/end tag-name ranges', () => {
-    const { ctx, position } = setup('<sec|tion>x</section>');
-    const ranges = getHtmlService().findLinkedEditingRanges(ctx.virtualDoc, position, ctx.htmlDoc);
-    expect(ranges?.length).toBe(2);
-  });
-
-  it('is gated off inside {% … %}', () => {
+  it('rejects a position inside a Liquid tag body', () => {
     expect(inHtmlRegion('{% ren|der x %}')).toBe(false);
   });
 });

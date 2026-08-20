@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest';
+import { Tokenizer, TokenKind } from 'liquidjs';
 import { tokenize } from './tokenize.js';
+
+describe('liquidjs token-kind contract', () => {
+  // `tokenize` classifies tokens by liquidjs's numeric `kind` rather than by
+  // `constructor.name`, because minification renames the bundled classes and
+  // would send every token down the `html` branch. If liquidjs ever stops
+  // stamping `kind`, this fails here instead of only in the production bundle.
+  it('stamps every top-level token with a numeric TokenKind', () => {
+    const raw = new Tokenizer('{% assign a = 1 %}<p>x</p>{{ y }}').readTopLevelTokens();
+    const kinds = raw.map((t) => (t as unknown as { kind?: number }).kind);
+    expect(kinds).toEqual([TokenKind.Tag, TokenKind.HTML, TokenKind.Output]);
+  });
+
+  it('classifies tags and outputs without relying on class names', () => {
+    const { tokens } = tokenize('{% assign a = 1 %}<p>x</p>{{ y }}');
+    expect(tokens.map((t) => t.kind)).toEqual(['tag', 'html', 'output']);
+  });
+});
 
 describe('tokenize', () => {
   it('returns a flat token stream for a simple template', () => {

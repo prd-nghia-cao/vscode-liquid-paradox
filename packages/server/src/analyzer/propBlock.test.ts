@@ -31,10 +31,18 @@ describe('extractComponentProps', () => {
     expect(out[0].name).toBe('class');
   });
 
-  it('stops scanning at the first non-assign top-level node', () => {
+  it('keeps scanning past non-assign top-level nodes', () => {
     const src = `{% assign a = a | default: '' %}
 <div>hi</div>
 {% assign b = b | default: '' %}`;
+    const out = props(src);
+    expect(out.map((p) => p.name)).toEqual(['a', 'b']);
+  });
+
+  it('reports a prop declared twice only once', () => {
+    const src = `{% assign a = a | default: '' %}
+<div>hi</div>
+{% assign a = a | default: 'other' %}`;
     const out = props(src);
     expect(out.map((p) => p.name)).toEqual(['a']);
   });

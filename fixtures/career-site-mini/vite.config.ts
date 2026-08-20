@@ -1,4 +1,4 @@
-import { pageDiscoveryPlugin } from './fake-plugins';
+import { pageDiscoveryPlugin, staticAssetsPlugin } from './fake-plugins';
 
 export default {
   plugins: [
@@ -8,5 +8,6 @@ export default {
       partialsDir: 'src/partials',
       componentsDir: 'src/components',
     }),
+    staticAssetsPlugin({ assetsDir: 'src/assets' }),
   ],
 };

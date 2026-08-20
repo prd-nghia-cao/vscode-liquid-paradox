@@ -4,6 +4,7 @@ import type { FileIndex } from '../workspace/fileIndex.js';
 import type { Binding, Range } from '../types.js';
 import { isKnownTag, isClosingTag } from '../data/tags.js';
 import { isKnownFilter } from '../data/filters.js';
+import { renderArgNames } from '../analyzer/renderArgs.js';
 
 export type Severity = 'error' | 'warning' | 'info' | 'hint';
 
@@ -103,15 +104,17 @@ function checkRender(args: string, range: Range, ctx: DiagnosticContext, out: Di
   }
   if (!isComponent) return;
   const props = ctx.lookupComponentProps(key);
-  if (!props) return;
+  // A component that declares no `assign … | default:` props tells us nothing
+  // about what it accepts, so every arg would be flagged. Stay quiet instead.
+  if (!props || props.length === 0) return;
   const declared = new Set(props.map((p) => p.name));
   const argList = args.slice(pathMatch[0].length).replace(/^\s*,/, '');
-  for (const m of argList.matchAll(/([\w-]+)\s*:/g)) {
-    if (!declared.has(m[1]!)) {
+  for (const name of renderArgNames(argList)) {
+    if (!declared.has(name)) {
       out.push({
         range,
         severity: 'warning',
-        message: `Unknown prop '${m[1]}' on component '${key}'`,
+        message: `Unknown prop '${name}' on component '${key}'`,
         source: 'liquid-paradox',
       });
     }

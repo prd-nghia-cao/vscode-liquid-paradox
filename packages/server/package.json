@@ -1,17 +1,19 @@
 {
   "name": "@vscode-liquid-paradox/server",
   "private": true,
-  "version": "1.1.1",
+  "version": "1.5.0",
   "type": "module",
   "main": "./dist/server.cjs",
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "smoke": "node scripts/smoke-lsp.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "jsonc-parser": "^3.3.1",
     "liquidjs": "^10.16.0",
     "typescript": "^5.5.0",
     "vscode-html-languageservice": "^5.6.0",

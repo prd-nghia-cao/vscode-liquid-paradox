@@ -35,3 +35,16 @@ if (unbundled) {
       'The HTML language service was not fully inlined — check esbuild `mainFields`.',
   );
 }
+
+// Defense-in-depth: minification renames bundled classes, so any `constructor.name`
+// comparison against a dependency's class name silently stops matching in the
+// production build. That once collapsed every Liquid token into an `html` token,
+// disabling props, scope, and diagnostics while the unminified build passed all
+// unit tests. Branch on stable data (e.g. liquidjs's numeric `TokenKind`) instead.
+const ctorNameCheck = bundle.match(/constructor\s*\.\s*name\s*={2,3}\s*["'][A-Z]/);
+if (ctorNameCheck) {
+  throw new Error(
+    `Bundle compares constructor.name against a class-name literal (${ctorNameCheck[0]}). ` +
+      'Minification renames bundled classes — branch on a stable value instead.',
+  );
+}

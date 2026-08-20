@@ -1,5 +1,6 @@
 import * as path from 'node:path';
 import { applyFileEvent, type FileIndex } from './fileIndex.js';
+import { assetKindForPath } from './assetIndex.js';
 import type { DepGraph } from './depGraph.js';
 
 export interface WatcherRegistration {
@@ -11,6 +12,7 @@ export function buildWatcherRegistrations(dirs: {
   partialsDir: string;
   componentsDir: string;
   layoutsDir: string;
+  assetsDir: string;
 }): WatcherRegistration[] {
   const liquidDirs = [dirs.componentsDir, dirs.partialsDir, dirs.layoutsDir].join(',');
   const jsonDirs = [dirs.pagesDir, dirs.partialsDir].join(',');
@@ -18,6 +20,7 @@ export function buildWatcherRegistrations(dirs: {
     { globPattern: '**/vite.config.ts' },
     { globPattern: `{${liquidDirs}}/**/*.liquid` },
     { globPattern: `{${jsonDirs}}/**/*.liquid.json` },
+    { globPattern: `${dirs.assetsDir}/**/*` },
   ];
 }
 
@@ -31,6 +34,7 @@ export interface RouteInput {
     partialsDir: string;
     componentsDir: string;
     layoutsDir: string;
+    assetsDir: string;
   };
   fileIndex: FileIndex;
   depGraph: DepGraph;
@@ -42,6 +46,12 @@ export interface RouteOutput {
   urisToRediagnose: string[];
   invalidateJsonPath?: string;
   invalidateComponentPropsKey?: string;
+  /**
+   * A media file under `assetsDir` changed. The caller applies it with
+   * {@link applyAssetEvent}, since the index stores a real file size that only
+   * the caller can stat.
+   */
+  assetEvent?: { absPath: string; event: 'created' | 'changed' | 'deleted' };
 }
 
 export function routeFileEvent(input: RouteInput): RouteOutput {
@@ -77,7 +87,15 @@ export function routeFileEvent(input: RouteInput): RouteOutput {
     return { rebuildIndex: false, urisToRediagnose, invalidateComponentPropsKey: propsKey };
   }
 
+  if (isUnderAssets(absPath, dirs.assetsDir) && assetKindForPath(absPath)) {
+    return { rebuildIndex: false, urisToRediagnose: [], assetEvent: { absPath, event } };
+  }
+
   return { rebuildIndex: false, urisToRediagnose: [] };
+}
+
+function isUnderAssets(absPath: string, assetsDir: string): boolean {
+  return absPath.startsWith(assetsDir + path.sep);
 }
 
 function findKey(
