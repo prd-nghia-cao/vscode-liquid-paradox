@@ -117,6 +117,20 @@ describe('bucketCursor', () => {
     expect(b.tagName).toBe('render');
   });
 
+  it('classifies cursor inside a renderKeep string literal as a render path', () => {
+    const src = "{% renderKeep '";
+    const b = bucketCursor(src, src.length);
+    expect(b.region).toBe('string-render-path');
+    expect(b.tagName).toBe('renderKeep');
+  });
+
+  it('classifies cursor inside renderKeep kwargs after a comma', () => {
+    const src = '{% renderKeep "layout/header", ';
+    const b = bucketCursor(src, src.length);
+    expect(b.region).toBe('render-args');
+    expect(b.renderTarget).toBe('layout/header');
+  });
+
   it('classifies cursor inside a layout string literal', () => {
     const src = '{% layout "';
     const b = bucketCursor(src, src.length);

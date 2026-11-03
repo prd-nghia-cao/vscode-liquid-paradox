@@ -69,7 +69,7 @@
     },
     "liquid-path-tag": {
       "name": "meta.tag.path.liquid",
-      "begin": "(\\{%-?)\\s*(render|include|layout)\\b",
+      "begin": "(\\{%-?)\\s*(renderKeep|render|include|layout)\\b",
       "end": "(-?%\\})",
       "beginCaptures": {
         "1": { "name": "punctuation.section.embedded.begin.liquid" },
@@ -132,7 +132,7 @@
       ]
     },
     "tag-name": {
-      "match": "(?<=\\{%-?\\s*)(if|elsif|else|endif|unless|endunless|case|when|endcase|for|endfor|tablerow|endtablerow|break|continue|cycle|assign|capture|endcapture|increment|decrement|include|render|layout|section|block|endblock|liquid|echo|raw|endraw|comment|endcomment)\\b",
+      "match": "(?<=\\{%-?\\s*)(if|elsif|else|endif|unless|endunless|case|when|endcase|for|endfor|tablerow|endtablerow|break|continue|cycle|assign|capture|endcapture|increment|decrement|include|renderKeep|render|layout|platform|endplatform|section|block|endblock|liquid|echo|raw|endraw|comment|endcomment)\\b",
       "name": "keyword.control.liquid"
     },
     "liquid-expression": {

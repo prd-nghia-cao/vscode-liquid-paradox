@@ -45,6 +45,12 @@ describe('provideDefinition', () => {
     expect(d?.range.start).toEqual({ line: 0, character: 0 });
   });
 
+  it('renderKeep "button" jumps to button.liquid line 0', () => {
+    const src = '{% renderKeep "button" %}';
+    const d = provideDefinition(m(src), { line: 0, character: 18 }, { fileIndex: idx });
+    expect(d?.uri).toBe('file:///c/button.liquid');
+  });
+
   it('layout "main" jumps to main.liquid', () => {
     const src = '{% layout "main" %}';
     const d = provideDefinition(m(src), { line: 0, character: 12 }, { fileIndex: idx });

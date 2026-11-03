@@ -53,7 +53,6 @@ export function buildScopeTable(source: string, root: RootNode, rootBindings: Bi
   const regions: ScopeRegion[] = [rootRegion];
 
   function walk(children: AstNode[], regionStart: number, regionEnd: number, parent: ScopeRegion): void {
-    let cursor = regionStart;
     const current: ScopeRegion = {
       start: regionStart,
       end: regionEnd,
@@ -61,7 +60,10 @@ export function buildScopeTable(source: string, root: RootNode, rootBindings: Bi
       parent,
     };
     regions.push(current);
+    visit(children, current);
+  }
 
+  function visit(children: AstNode[], current: ScopeRegion): void {
     for (const node of children) {
       const nodeStart = offsetOf(node.range.start.line, node.range.start.character);
       const nodeEnd = offsetOf(node.range.end.line, node.range.end.character);
@@ -122,7 +124,6 @@ export function buildScopeTable(source: string, root: RootNode, rootBindings: Bi
             for (const branch of node.branches) {
               walkBranch(branch, inner);
             }
-            cursor = childEnd;
             continue;
           }
         } else if (node.openName === 'tablerow') {
@@ -159,6 +160,10 @@ export function buildScopeTable(source: string, root: RootNode, rootBindings: Bi
             }
             continue;
           }
+        } else if (node.openName === 'platform') {
+          // A transparent wrapper: its assigns are used by the rest of the page.
+          visit(node.branches[0]!.body, current);
+          continue;
         } else if (node.openName === 'capture') {
           const captureName = node.openArgs.trim();
           if (/^[\w-]+$/.test(captureName)) {
@@ -173,8 +178,6 @@ export function buildScopeTable(source: string, root: RootNode, rootBindings: Bi
           walkBranch(branch, current);
         }
       }
-
-      cursor = nodeEnd;
     }
   }
 

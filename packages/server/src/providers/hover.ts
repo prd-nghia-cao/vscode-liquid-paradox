@@ -31,7 +31,7 @@ export function provideHover(model: DocumentModel, pos: Position, ctx: HoverCont
 
   const stringCtx = readEnclosingStringLiteral(model.text, offset);
   if (stringCtx) {
-    const renderTag = isPathContext(model.text, stringCtx.start, /\brender\s+["']$/);
+    const renderTag = isPathContext(model.text, stringCtx.start, /\b(?:renderKeep|render)\s+["']$/);
     if (renderTag) {
       const entry = ctx.fileIndex.components.get(stringCtx.value) ?? ctx.fileIndex.partials.get(stringCtx.value);
       if (entry) return { markdown: `[${entry.absPath}](file://${entry.absPath})` };
@@ -46,7 +46,7 @@ export function provideHover(model: DocumentModel, pos: Position, ctx: HoverCont
   const tag = getTagInfo(word.text);
   if (tag && isAtTagName(model.text, offset, word)) {
     return {
-      markdown: `**${tag.name}** — ${tag.description}\n\n\`${tag.syntax}\`\n\n[Docs](${tag.docsUrl})`,
+      markdown: `**${tag.name}** — ${tag.description}\n\n\`${tag.syntax}\`${tag.docsUrl ? `\n\n[Docs](${tag.docsUrl})` : ''}`,
       range: word.range,
     };
   }

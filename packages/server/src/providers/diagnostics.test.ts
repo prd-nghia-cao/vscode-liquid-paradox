@@ -63,6 +63,54 @@ describe('provideDiagnostics', () => {
     expect(ds.some((d) => /unresolved render/i.test(d.message))).toBe(true);
   });
 
+  it('treats renderKeep as a known tag and checks its path', () => {
+    const ds = diag('{% renderKeep "missing" %}');
+    expect(ds.some((d) => /unknown tag/i.test(d.message))).toBe(false);
+    expect(ds.some((d) => /unresolved render path: 'missing'/i.test(d.message))).toBe(true);
+  });
+
+  it('does NOT flag renderKeep pointing at an existing partial', () => {
+    const ds = diag('{% renderKeep "foot" %}');
+    expect(ds.every((d) => !/unresolved|unknown tag/i.test(d.message))).toBe(true);
+  });
+
+  it('accepts a balanced platform block without unknown-tag errors', () => {
+    const ds = diag('{% platform %}<p>x</p>{% endplatform %}');
+    expect(ds).toEqual([]);
+  });
+
+  it('flags an unclosed platform block', () => {
+    const ds = diag('{% platform %}<p>x</p>');
+    expect(ds.some((d) => /unclosed block 'platform'/i.test(d.message))).toBe(true);
+  });
+
+  it('does NOT check variables or filters inside a platform block', () => {
+    const src = [
+      '{% platform %}',
+      '{% assign locations_length = data:job.city_state.length %}',
+      '{% assign country = data:job.custom_fields_value | cf_key=cf_primary_location_country %}',
+      '{% if location_length < 2 %}<b>{{ location_length }}</b>{% endif %}',
+      '{% endplatform %}',
+    ].join('\n');
+    expect(diag(src)).toEqual([]);
+  });
+
+  it('still checks render paths inside a platform block', () => {
+    const ds = diag('{% platform %}{% render "missing" %}{% endplatform %}');
+    expect(ds.some((d) => /unresolved render path/i.test(d.message))).toBe(true);
+  });
+
+  it('makes assigns inside a platform block visible after it', () => {
+    const src = "{% platform %}{% assign evp_headline = 'Be Bayer.' %}{% endplatform %}<h1>{{ evp_headline }}</h1>";
+    expect(diag(src).filter((d) => /unknown variable/i.test(d.message))).toEqual([]);
+  });
+
+  it('resumes variable checks after endplatform', () => {
+    const ds = diag('{% platform %}{{ a }}{% endplatform %}{{ b }}');
+    const unknown = ds.filter((d) => /unknown variable/i.test(d.message));
+    expect(unknown.map((d) => d.message)).toEqual(["Unknown variable 'b'"]);
+  });
+
   it('flags unresolved layout path', () => {
     const ds = diag('{% layout "ghost" %}');
     expect(ds.some((d) => /unresolved layout/i.test(d.message))).toBe(true);

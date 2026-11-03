@@ -13,6 +13,8 @@ VS Code IntelliSense for LiquidJS templates in Paradox by Workday static-site pr
 - Component prop completions after `{% render "name", `
 - Hover documentation linking to https://liquidjs.com
 - Go-to-definition for variables, `{% render %}`, and `{% layout %}`
+- Paradox `{% renderKeep %}` (keeps a partial as a shared snippet on build) gets everything `{% render %}` does: highlighting, path and prop completions, hover, go-to-definition, and diagnostics
+- Paradox `{% platform %}…{% endplatform %}` blocks are recognised (highlighting, folding, indentation, block-balance checks). Paradox evaluates their contents with backend data, so variable and filter checks are skipped inside them; variables assigned inside stay in scope for the rest of the page
 - Diagnostics for unknown tags/filters, unresolved paths, unbalanced blocks, and unknown component props
 - Sibling `.liquid.json` data files surfaced as typed variables
 - Paradox backend tags (`{{component:...}}`, `{{snippet:...}}`, `{{data:...}}`, `{{attribute:...}}`) with hover-only docs

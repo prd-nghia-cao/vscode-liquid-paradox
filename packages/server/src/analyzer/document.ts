@@ -4,6 +4,7 @@ import { buildScopeTable, type ScopeTable } from './scope.js';
 import { inferTopLevelBindings } from './jsonSchema.js';
 import { extractComponentProps } from './propBlock.js';
 import { runParadoxPrepass } from './paradoxPrepass.js';
+import { isRenderTag } from '../data/tags.js';
 import type { Binding, Dependencies, ParadoxTag, Range } from '../types.js';
 
 export interface AnalyzeInput {
@@ -86,7 +87,7 @@ function collectDependencies(root: RootNode, jsonCompanion?: string): Dependenci
   function walk(nodes: AstNode[]): void {
     for (const node of nodes) {
       if (node.kind === 'tag') {
-        if (node.name === 'render' || node.name === 'include') {
+        if (isRenderTag(node.name) || node.name === 'include') {
           const path = firstStringLiteral(node.args);
           if (path) renderedFiles.push(path);
         } else if (node.name === 'layout') {

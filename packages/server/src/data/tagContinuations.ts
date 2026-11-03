@@ -26,6 +26,7 @@ export const TAG_CONTINUATIONS: Readonly<Record<string, readonly ContinuationKey
   for: FOR_KEYWORDS,
   tablerow: FOR_KEYWORDS,
   render: RENDER_KEYWORDS,
+  renderKeep: RENDER_KEYWORDS,
   include: RENDER_KEYWORDS,
   paginate: PAGINATE_KEYWORDS,
 });

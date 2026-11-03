@@ -2,7 +2,7 @@ export interface TagInfo {
   name: string;
   description: string;
   syntax: string;
-  docsUrl: string;
+  docsUrl?: string;
   isClosing: boolean;
   opens?: string;
 }
@@ -11,7 +11,7 @@ function tag(
   name: string,
   description: string,
   syntax: string,
-  opts: { isClosing?: boolean; opens?: string } = {},
+  opts: { isClosing?: boolean; opens?: string; docsUrl?: string | null } = {},
 ): [string, TagInfo] {
   return [
     name,
@@ -19,7 +19,10 @@ function tag(
       name,
       description,
       syntax,
-      docsUrl: `https://liquidjs.com/tags/${name.replace(/^end/, '')}.html`,
+      docsUrl:
+        opts.docsUrl === null
+          ? undefined
+          : (opts.docsUrl ?? `https://liquidjs.com/tags/${name.replace(/^end/, '')}.html`),
       isClosing: opts.isClosing ?? false,
       opens: opts.opens,
     },
@@ -50,6 +53,23 @@ export const TAGS: Readonly<Record<string, TagInfo>> = Object.freeze(
     tag('increment', 'Create or increment a counter starting at 0.', '{% increment counter %}'),
     tag('decrement', 'Create or decrement a counter starting at -1.', '{% decrement counter %}'),
     tag('render', 'Render another template in an isolated scope.', '{% render "template", key: value %}'),
+    tag(
+      'renderKeep',
+      'Paradox: render a partial like `render`, but always ship it as its own shared snippet on build.',
+      '{% renderKeep "partial", key: value %}',
+      { docsUrl: 'https://liquidjs.com/tags/render.html' },
+    ),
+    tag(
+      'platform',
+      'Paradox: everything inside runs on Paradox at request time with backend data. It ships verbatim to the export and renders as nothing (or its `else` branches) in `pnpm dev`.',
+      '{% platform %}...{% endplatform %}',
+      { docsUrl: null },
+    ),
+    tag('endplatform', 'Close a platform block.', '{% endplatform %}', {
+      isClosing: true,
+      opens: 'platform',
+      docsUrl: null,
+    }),
     tag('include', 'Render another template in the current scope (legacy).', '{% include "template" %}'),
     tag('layout', 'Wrap this template in a layout.', '{% layout "layout-name" %}'),
     tag('raw', 'Output the block contents without parsing Liquid.', '{% raw %}...{% endraw %}'),
@@ -75,4 +95,10 @@ export function isClosingTag(name: string): boolean {
 
 export function getOpeningForClosing(name: string): string | undefined {
   return TAGS[name]?.opens;
+}
+
+export const RENDER_TAGS: readonly string[] = ['render', 'renderKeep'];
+
+export function isRenderTag(name: string | undefined): boolean {
+  return name !== undefined && RENDER_TAGS.includes(name);
 }

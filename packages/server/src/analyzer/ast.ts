@@ -29,7 +29,7 @@ export interface AstResult {
   errors: AstError[];
 }
 
-const BLOCK_OPENERS = new Set(['if', 'unless', 'for', 'case', 'capture', 'tablerow', 'raw', 'comment']);
+const BLOCK_OPENERS = new Set(['if', 'unless', 'for', 'case', 'capture', 'tablerow', 'raw', 'comment', 'platform']);
 
 const BRANCH_KEYWORDS: Record<string, string[]> = {
   if: ['elsif', 'else'],

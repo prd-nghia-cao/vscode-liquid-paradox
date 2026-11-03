@@ -1,4 +1,5 @@
 import { isParadoxKind } from '../data/paradoxTags.js';
+import { isRenderTag } from '../data/tags.js';
 
 export type CursorRegion =
   | 'tag'
@@ -135,7 +136,7 @@ function classifyTagBody(body: string, openOffset: number): CursorBucket {
   const tagNameMatch = /^[\s-]*([\w-]+)/.exec(body);
   const tagName = tagNameMatch?.[1];
 
-  if (tagName === 'render' || tagName === 'include') {
+  if (tagName !== undefined && (isRenderTag(tagName) || tagName === 'include')) {
     const renderArg = new RegExp(`\\b${tagName}\\s+["']([^"']+)["']\\s*,[^%}]*$`).exec(body);
     if (renderArg) {
       return { region: 'render-args', openOffset, body, tagName, renderTarget: renderArg[1] };
@@ -144,7 +145,7 @@ function classifyTagBody(body: string, openOffset: number): CursorBucket {
     const stringMatch = /^\s+(["'])([^"']*)$/.exec(argsTail);
     if (stringMatch) {
       return {
-        region: tagName === 'render' ? 'string-render-path' : 'string-include-path',
+        region: isRenderTag(tagName) ? 'string-render-path' : 'string-include-path',
         openOffset,
         body,
         tagName,

@@ -27,7 +27,7 @@ export function provideDefinition(
 
   const stringCtx = readEnclosingStringLiteral(model.text, offset);
   if (stringCtx) {
-    const isRender = /\brender\s+["']$/.test(model.text.slice(0, stringCtx.start + 1));
+    const isRender = /\b(?:renderKeep|render)\s+["']$/.test(model.text.slice(0, stringCtx.start + 1));
     if (isRender) {
       const entry = ctx.fileIndex.components.get(stringCtx.value) ?? ctx.fileIndex.partials.get(stringCtx.value);
       if (entry) return { uri: 'file://' + entry.absPath, range: zeroRange() };

@@ -2,7 +2,7 @@ import type { DocumentModel } from '../analyzer/document.js';
 import type { AstNode } from '../analyzer/ast.js';
 import type { FileIndex } from '../workspace/fileIndex.js';
 import type { Binding, Range } from '../types.js';
-import { isKnownTag, isClosingTag } from '../data/tags.js';
+import { isKnownTag, isClosingTag, isRenderTag } from '../data/tags.js';
 import { isKnownFilter } from '../data/filters.js';
 import { renderArgNames } from '../analyzer/renderArgs.js';
 
@@ -29,26 +29,38 @@ export function provideDiagnostics(model: DocumentModel, ctx: DiagnosticContext)
   for (const err of model.astErrors)
     out.push({ range: err.range, severity: 'error', message: err.message, source: 'liquid-paradox' });
 
-  walk(model.ast.root.children, model, ctx, out);
+  walk(model.ast.root.children, model, ctx, out, false);
 
   return out;
 }
 
-function walk(nodes: AstNode[], model: DocumentModel, ctx: DiagnosticContext, out: Diagnostic[]): void {
+/**
+ * `inPlatform`: inside `{% platform %}` Paradox evaluates expressions with
+ * backend variables and filters LiquidJS doesn't know, so they aren't checked.
+ */
+function walk(
+  nodes: AstNode[],
+  model: DocumentModel,
+  ctx: DiagnosticContext,
+  out: Diagnostic[],
+  inPlatform: boolean,
+): void {
   for (const node of nodes) {
     if (node.kind === 'output') {
       const key = `${node.range.start.line}:${node.range.start.character}`;
-      if (model.paradoxOutputRanges.has(key)) continue;
+      if (model.paradoxOutputRanges.has(key) || inPlatform) continue;
       checkExpression(node.content, node.rawRange, model, out);
     } else if (node.kind === 'tag') {
-      if (node.name === 'render' || node.name === 'include') {
+      if (isRenderTag(node.name) || node.name === 'include') {
         if (ctx.pathFeaturesEnabled) checkRender(node.args, node.rawRange, ctx, out);
       } else if (node.name === 'layout') {
         if (ctx.pathFeaturesEnabled) checkLayout(node.args, node.rawRange, ctx, out);
       } else if (node.name === 'assign') {
+        if (inPlatform) continue;
         const expr = node.args.replace(/^[\w-]+\s*=\s*/, '');
         checkExpression(expr, node.rawRange, model, out);
       } else if (node.name === 'echo') {
+        if (inPlatform) continue;
         checkExpression(node.args, node.rawRange, model, out);
       } else if (!isKnownTag(node.name) && !isClosingTag(node.name)) {
         out.push({
@@ -59,7 +71,8 @@ function walk(nodes: AstNode[], model: DocumentModel, ctx: DiagnosticContext, ou
         });
       }
     } else if (node.kind === 'block') {
-      for (const b of node.branches) walk(b.body, model, ctx, out);
+      const platform = inPlatform || node.openName === 'platform';
+      for (const b of node.branches) walk(b.body, model, ctx, out, platform);
     }
   }
 }
